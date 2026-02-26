@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=595px">
+  <title>CV — {{ cv.personal_info.name }}</title>
+  <style>
+    @page { size: A4; margin: 0; }
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'DM Sans', sans-serif; }
+    h1, h2, h3, h4, p, li, span, div { overflow-wrap: anywhere; word-break: break-word; }
+    body { width: 595px; min-height: 842px; background: #f2efec; color: #6d6258; }
+    .sheet { width: 595px; min-height: 842px; background: #f2efec; }
+    .top { display: flex; min-height: 246px; }
+    .top-left { width: 220px; background: #e2dbd3; display: flex; align-items: center; justify-content: center; }
+    .top-right { width: 375px; padding: 34px 26px 20px; }
+    .photo { width: 176px; height: 176px; border-radius: 50%; overflow: hidden; background: #d2cbc3; }
+    .photo img { width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+    .photo-fallback { width: 100%; height: 100%; border: 2px dashed #9e8f80; color: #7c6f62; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+    .name-line { font-size: 17px; letter-spacing: 4px; text-transform: uppercase; color: #756a5d; font-weight: 500; }
+    .job-line { margin-top: 7px; font-family: Georgia, 'Times New Roman', serif; font-size: 50px; line-height: .95; letter-spacing: 1px; text-transform: uppercase; color: #746757; font-weight: 700; }
+    .summary { margin-top: 16px; font-size: 12px; line-height: 1.45; color: #71675f; }
+    .bottom { display: flex; min-height: 596px; }
+    .left { width: 220px; background: #d7cbc0; padding: 20px 20px 18px 22px; }
+    .right { width: 375px; background: #f1f1f1; padding: 22px 24px 18px; }
+    .title-left { font-size: 20px; letter-spacing: 4px; text-transform: uppercase; color: #70675f; font-weight: 700; margin-bottom: 10px; }
+    .left-block { margin-bottom: 20px; }
+    .left p, .left li { font-size: 12px; line-height: 1.45; }
+    .left ul { padding-left: 14px; }
+    .left li { margin-bottom: 3px; }
+    .title-right { font-size: 26px; letter-spacing: 3px; text-transform: uppercase; color: #6f665d; font-weight: 700; margin-bottom: 10px; }
+    .entry { margin-bottom: 14px; position: relative; padding-left: 12px; }
+    .entry:before { content: '⚲'; position: absolute; left: 0; top: 1px; font-size: 10px; color: #6d635b; }
+    .entry h3 { font-size: 13px; font-weight: 700; color: #5f574f; }
+    .entry .meta { font-size: 11px; font-style: italic; color: #7f746c; margin-bottom: 3px; }
+    .entry .desc { font-size: 11px; line-height: 1.35; color: #6f665d; }
+  </style>
+</head>
+<body>
+{% set p = cv.personal_info %}
+{% set experiences = cv.experiences.all if cv.experiences is defined and cv.experiences.all is defined else (cv.experiences if cv.experiences is defined else []) %}
+{% set education = cv.education.all if cv.education is defined and cv.education.all is defined else (cv.education if cv.education is defined else []) %}
+{% set skills = cv.skills.all if cv.skills is defined and cv.skills.all is defined else (cv.skills if cv.skills is defined else []) %}
+{% set qualities = cv.qualities.all if cv.qualities is defined and cv.qualities.all is defined else (cv.qualities if cv.qualities is defined else []) %}
+{% set photo_url = cv.photo.url if cv.photo is defined and cv.photo and cv.photo.url is defined else (p.photo_data_url if p.photo_data_url is defined else '') %}
+<div class="sheet">
+  <div class="top">
+    <div class="top-left"><div class="photo">{% if photo_url %}<img src="{{ photo_url }}" alt="Photo">{% else %}<div class="photo-fallback">PHOTO</div>{% endif %}</div></div>
+    <div class="top-right">
+      <p class="name-line">{{ p.name }}</p>
+      <h1 class="job-line">{{ p.job_title }}</h1>
+      <p class="summary">{{ cv.summary }}</p>
+    </div>
+  </div>
+
+  <div class="bottom">
+    <aside class="left">
+      <div class="left-block">
+        <h3 class="title-left">Contact</h3>
+        <p>✆ {{ p.phone }}</p>
+        <p>✉ {{ p.email }}</p>
+        <p>⌂ {{ p.address }}</p>
+        <p>⚑ {{ p.city }}</p>
+      </div>
+      <div class="left-block">
+        <h3 class="title-left">Compétences</h3>
+        <ul>{% for skill in skills|sort(attribute='order') %}<li>{{ skill.name }}</li>{% endfor %}</ul>
+      </div>
+      <div class="left-block">
+        <h3 class="title-left">Qualités</h3>
+        <ul>{% for quality in qualities %}<li>{{ quality }}</li>{% endfor %}</ul>
+      </div>
+    </aside>
+
+    <main class="right">
+      <h2 class="title-right">Expérience Professionnelle</h2>
+      {% for exp in experiences|sort(attribute='order') %}
+      <article class="entry"><h3>{{ exp.title }}</h3><p class="meta">{{ exp.company }} / {{ exp.location }} / {{ exp.start_date }} - {% if exp.is_current %}Aujourd'hui{% else %}{{ exp.end_date }}{% endif %}</p><p class="desc">{{ exp.description }}</p></article>
+      {% endfor %}
+
+      <h2 class="title-right">Formations</h2>
+      {% for edu in education|sort(attribute='order') %}
+      <article class="entry"><h3>{{ edu.degree }}</h3><p class="meta">{{ edu.school }}</p><p class="desc">{{ edu.year }}</p></article>
+      {% endfor %}
+    </main>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="csrf-token" content="{{ csrf_token }}" />
+  <title>Créer CV | ProFolio</title>
+  <link rel="stylesheet" href="/static/css/cv_builder.css" />
+  <link rel="stylesheet" href="/static/css/cv_models.css?v=20260225" />
+</head>
+<body>
+{% from "models/cv_previews.html" import cv_preview %}
+<div class="builder-page">
+  <header class="builder-topbar">
+    <div class="top-left">
+      <a class="icon-btn" href="/dashboard/" aria-label="Retour dashboard">
+        <i data-lucide="arrow-left"></i>
+      </a>
+    </div>
+
+    <div class="top-center"></div>
+
+    <div class="top-right">
+      <button class="btn-ghost-small" type="button" id="cvCreateSaveBtn">💾 Sauvegarder</button>
+      <button class="btn-primary-small" type="button" id="cvCreateDownloadBtn">📥 Télécharger PDF</button>
+    </div>
+  </header>
+
+  <div class="builder-body">
+    <section class="builder-left">
+      <div class="import-cards">
+        <button class="import-card" type="button" id="uploadCvBtn">
+          <i data-lucide="upload"></i>
+          <span>Télécharger un CV existant</span>
+        </button>
+        <div class="import-card" style="display:grid;gap:8px;align-items:stretch;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span class="linkedin-icon">in</span>
+            <span>Importer votre profil LinkedIn (URL)</span>
+          </div>
+          <input
+            id="linkedinUrlInput"
+            class="builder-input plain"
+            type="url"
+            placeholder="https://www.linkedin.com/in/votre-profil/"
+            autocomplete="url"
+          />
+          <button class="btn-ghost-small" type="button" id="importLinkedinBtn">Importer depuis URL</button>
+        </div>
+        <input id="uploadCvInput" type="file" accept=".txt,.md,.json,.pdf,.docx" hidden />
+      </div>
+
+      <div class="form-section">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">Informations de base</h2>
+            <p class="section-subtitle">Notre IA va générer votre CV complet depuis ces informations</p>
+          </div>
+          <div class="section-actions">
+            <button class="section-btn" type="button"><i data-lucide="ellipsis"></i></button>
+            <button class="section-btn collapse-icon" type="button"><i data-lucide="chevron-up"></i></button>
+          </div>
+        </div>
+
+        <form id="builderForm" novalidate>
+          <input type="hidden" id="formLang" value="fr" />
+          <input type="hidden" id="selectedTemplate" value="{{ selected_model_id }}" />
+
+          <div class="form-group">
+            <label class="form-label">Nom complet *</label>
+            <div class="input-with-icon">
+              <i data-lucide="user" class="input-icon"></i>
+              <input id="full-name" class="builder-input" type="text" placeholder="Ex: Jean Kokou Mensah" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Photo</label>
+            <div class="photo-upload-row">
+              <label class="photo-upload-btn" for="photo-input">
+                <i data-lucide="camera"></i>
+                <span>Importer une photo</span>
+              </label>
+              <input id="photo-input" type="file" accept="image/*" hidden />
+              <button type="button" id="photo-remove-btn" class="photo-remove-btn hidden">Supprimer</button>
+            </div>
+            <p class="tiny-label">PNG, JPG, WEBP (max 5MB)</p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Poste visé *</label>
+            <div class="input-with-icon">
+              <i data-lucide="briefcase" class="input-icon"></i>
+              <input id="job-title" class="builder-input" type="text" placeholder="Ex: Développeur Web, Comptable, Infirmier..." required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Compétences principales *</label>
+            <p class="tiny-label">Appuyez sur Entrée pour ajouter</p>
+            <div id="skills-zone" class="tags-input-zone">
+              <input id="skills-input" class="tags-real-input" type="text" placeholder="Python, Django, Photoshop..." />
+            </div>
+            <div class="skill-suggestions">
+              <button type="button" class="suggestion-pill">Python</button>
+              <button type="button" class="suggestion-pill">React</button>
+              <button type="button" class="suggestion-pill">Excel</button>
+              <button type="button" class="suggestion-pill">Photoshop</button>
+              <button type="button" class="suggestion-pill">Gestion de projet</button>
+              <button type="button" class="suggestion-pill">Marketing</button>
+              <button type="button" class="suggestion-pill">Comptabilité</button>
+              <button type="button" class="suggestion-pill">Vente</button>
+              <button type="button" class="suggestion-pill">Service client</button>
+              <button type="button" class="suggestion-pill">UI/UX</button>
+              <button type="button" class="suggestion-pill">Data analyse</button>
+              <button type="button" class="suggestion-pill">Rédaction</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Centres d'intérêt *</label>
+            <p class="tiny-label">Ajoutez vos centres d'intérêt avec Entrée</p>
+            <div id="interests-zone" class="tags-input-zone">
+              <input id="interests-input" class="tags-real-input" type="text" placeholder="Ex: Football, Lecture, Bénévolat..." />
+            </div>
+            <div class="skill-suggestions">
+              <button type="button" class="interest-pill">Lecture</button>
+              <button type="button" class="interest-pill">Musique</button>
+              <button type="button" class="interest-pill">Sport</button>
+              <button type="button" class="interest-pill">Voyage</button>
+              <button type="button" class="interest-pill">Cuisine</button>
+              <button type="button" class="interest-pill">Bénévolat</button>
+            </div>
+          </div>
+
+          <button type="button" class="option-toggle" id="moreInfoToggle">+ Ajouter plus d'infos</button>
+          <div class="optional-grid hidden" id="moreInfoSection">
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input id="email" class="builder-input plain" type="email" placeholder="vous@email.com" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Téléphone</label>
+              <input id="phone" class="builder-input plain" type="text" placeholder="+228 ..." />
+            </div>
+            <div class="form-group">
+              <label class="form-label">LinkedIn</label>
+              <input id="linkedin" class="builder-input plain" type="text" placeholder="https://linkedin.com/in/..." />
+            </div>
+            <div class="form-group">
+              <label class="form-label">GitHub</label>
+              <input id="github" class="builder-input plain" type="text" placeholder="https://github.com/..." />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Prompt CV IA *</label>
+            <p class="tiny-label">Décrivez le style de CV souhaité, le ton, le type de poste et les points à mettre en avant</p>
+            <div class="input-with-icon">
+              <i data-lucide="sparkles" class="input-icon"></i>
+              <textarea
+                id="cv-prompt"
+                class="builder-input"
+                style="min-height:92px;resize:vertical;padding-top:12px;"
+                placeholder="Ex: CV moderne et clair pour un poste de développeur full stack, ton professionnel, orienté résultats, mettre en avant Python, Django, React et 3 projets concrets..."
+                required
+              ></textarea>
+            </div>
+          </div>
+
+          <button id="generate-btn" type="button" class="btn-generate">
+            <i data-lucide="sparkles"></i>
+            <span id="btn-text">⚡ Générer mon CV</span>
+            <span id="btn-spinner" class="btn-spinner hidden">
+              <i data-lucide="loader-2" class="spinning"></i>
+              <span id="loading-text">Génération du résumé...</span>
+            </span>
+          </button>
+          <div id="generate-progress" class="generate-progress">
+            <div id="progress-bar" class="generate-progress-bar"></div>
+          </div>
+        </form>
+
+        <div id="generated-sections" class="generated-sections hidden">
+          <div class="generated-banner">✓ CV généré ! Vous pouvez modifier les sections ci-dessous</div>
+          <div class="mini-accordion">Résumé professionnel</div>
+          <div class="mini-accordion">Expériences</div>
+          <div class="mini-accordion">Formation</div>
+          <div class="mini-accordion">Compétences</div>
+          <div class="mini-accordion">Langues</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="builder-right">
+      <div class="preview-body">
+        <div class="cv-a4-container" id="a4Container">
+          <iframe id="cv-preview-frame" title="Aperçu CV"></iframe>
+          <div class="preview-empty" id="previewEmpty">
+            <i data-lucide="file-text" style="width:48px;height:48px;color:#D1D5DB"></i>
+            <h3>Votre CV apparaîtra ici</h3>
+            <p>Remplissez les champs à gauche pour commencer</p>
+          </div>
+        </div>
+      </div>
+      <div id="modelsPanel" class="models-panel hidden">
+        <div class="models-track">
+          {% for m in models_gallery %}
+          <button
+            type="button"
+            class="model-card {% if selected_model_id == m.id %}active{% endif %}"
+            data-model-id="{{ m.id }}"
+            data-model-name="{{ m.name }}"
+          >
+            <div class="model-card-preview">
+              {{ cv_preview(m.id, m.name) }}
+            </div>
+            <span>{{ m.name }}</span>
+          </button>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="preview-bottom-dock">
+        <button id="openModelsBtn" class="dock-btn dock-main" type="button">Modèles</button>
+        <button id="zoom-out" class="dock-btn" type="button"><i data-lucide="minus"></i></button>
+        <button id="zoom-in" class="dock-btn" type="button"><i data-lucide="plus"></i></button>
+        <button class="dock-btn" type="button"><i data-lucide="maximize-2"></i></button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="/static/js/builder.js?v=20260226"></script>
+</body>
+</html>

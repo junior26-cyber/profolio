@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CV Templates | ProFolio</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <link rel="stylesheet" href="/static/css/cv_models.css?v=20260225" />
+</head>
+<body>
+{% from "models/cv_previews.html" import cv_preview %}
+<div class="bg-grid"></div>
+<header class="navbar scrolled"><div class="container nav-wrap"><a href="/" class="logo">ProFolio</a><div class="nav-right"><a href="/cv/create/" class="btn-ghost">Créer un CV</a></div></div></header>
+<main class="container">
+  <section>
+    <h1>Choisir un template CV</h1>
+    <div class="gallery-grid">
+      {% for t in templates_list %}
+      <article class="card gallery-card">
+        <div class="preview-box">{{ cv_preview(t.id, t.name) }}</div>
+        {% if t.premium %}<span class="badge-premium">PREMIUM</span>{% else %}<span class="badge-free">FREE</span>{% endif %}
+        <h3>{{ t.name }}</h3>
+        <a class="btn-primary" href="/cv/create/?template={{ t.id }}">Utiliser ce template</a>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+</main>
+</body>
+</html>

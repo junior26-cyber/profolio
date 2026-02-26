@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard | ProFolio</title>
+  <link rel="stylesheet" href="/static/css/dashboard.css" />
+</head>
+<body>
+<div class="dash-page">
+  <aside class="dash-sidebar">
+    <a href="/" class="logo">ProFolio</a>
+    <nav class="side-nav">
+      <a href="/dashboard/" class="active">Tableau de bord</a>
+      {% if user.is_staff or user.is_superuser %}<a href="/admin/panel/">Admin panel</a>{% endif %}
+      <a href="/cv/create/">Créer un CV</a>
+      <a href="/letters/create/">Créer une lettre</a>
+      <a href="#" data-portfolio-disabled="1">Créer un portfolio</a>
+    </nav>
+    <div class="side-actions">
+      <a href="/cv/create/" class="btn-primary">+ Nouveau CV</a>
+      <a href="/letters/create/" class="btn-ghost">+ Nouvelle lettre</a>
+      <form method="post" action="/logout/">
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}" />
+        <button type="submit" class="btn-ghost" style="width:100%;">Se déconnecter</button>
+      </form>
+    </div>
+  </aside>
+
+  <main class="dash-main">
+    <section class="hero-card">
+      <div>
+        <p class="hello">Bonjour {{ user.first_name or user.username or 'Utilisateur' }} 👋</p>
+        <h1>Voici vos documents ProFolio</h1>
+        <p class="hero-sub">Gérez vos CV, lettres et portfolios depuis ce tableau de bord.</p>
+      </div>
+      <div class="kpis">
+        <article><strong>{{ cv_items|length }}</strong><span>CV</span></article>
+        <article><strong>{{ letter_items|length }}</strong><span>Lettres</span></article>
+        <article><strong>{{ portfolio_items|length }}</strong><span>Portfolios</span></article>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Mes CV</h2></div>
+      {% if cv_items %}
+      <div class="list">
+        {% for cv in cv_items %}
+        <article class="item">
+          <div>
+            <h3>{{ cv.input.job_title or 'CV sans titre' }}</h3>
+            <p>{{ cv.input.name or 'Nom non renseigné' }} · {{ cv.updated_at }}</p>
+          </div>
+          <div class="item-actions">
+            <a href="/cv/build/{{ cv.id }}/">Ouvrir</a>
+            <a href="/cv/download/{{ cv.id }}/">PDF</a>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="empty">Aucun CV pour le moment.</p>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Mes lettres</h2></div>
+      {% if letter_items %}
+      <div class="list">
+        {% for letter in letter_items %}
+        <article class="item">
+          <div>
+            <h3>{{ letter.title or 'Lettre sans titre' }}</h3>
+            <p>{{ letter.company or 'Entreprise non renseignée' }} · {{ letter.updated_at }}</p>
+          </div>
+          <div class="item-actions">
+            <a href="/letters/edit/{{ letter.id }}/">Ouvrir</a>
+            <a href="/letters/download/{{ letter.id }}/">PDF</a>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="empty">Aucune lettre pour le moment.</p>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Mes portfolios</h2></div>
+      {% if portfolio_items %}
+      <div class="list">
+        {% for p in portfolio_items %}
+        <article class="item">
+          <div>
+            <h3>{{ p.title }}</h3>
+            <p>Depuis CV #{{ p.cv_id }} · {{ p.updated_at }}</p>
+          </div>
+          <div class="item-actions">
+            <a href="/cv/build/{{ p.cv_id }}/">Voir</a>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="empty">Aucun portfolio généré pour le moment.</p>
+      {% endif %}
+    </section>
+  </main>
+</div>
+<script>
+  document.addEventListener("click", function (event) {
+    const target = event.target.closest("[data-portfolio-disabled='1']");
+    if (!target) return;
+    event.preventDefault();
+    alert("La création de portfolio est temporairement désactivée. Bientôt disponible.");
+  });
+</script>
+</body>
+</html>

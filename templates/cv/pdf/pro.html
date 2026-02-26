@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=595px">
+  <title>CV — {{ cv.personal_info.name }}</title>
+  <style>
+    @page { size: A4; margin: 0; }
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'DM Sans', sans-serif; }
+    h1, h2, h3, h4, p, li, span, div { overflow-wrap: anywhere; word-break: break-word; }
+    body { width: 595px; min-height: 842px; background: #f4f4f4; color: #2f3136; }
+    .sheet { width: 595px; min-height: 842px; display: flex; background: #f4f4f4; }
+    .left { width: 220px; background: #e48872; color: #fff8f6; padding: 20px 16px 16px; }
+    .right { width: 375px; padding: 28px 26px 16px; background: #efefef; }
+    .photo { width: 144px; height: 144px; border-radius: 50%; border: 5px solid #edf2f5; margin: 0 auto 16px; overflow: hidden; }
+    .photo img { width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+    .photo-fallback { width: 100%; height: 100%; border: 2px dashed #f3c0b3; color: #fbe0d8; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+    .left h3 { font-size: 20px; text-transform: uppercase; font-weight: 700; margin: 8px 0 10px; position: relative; }
+    .left h3:after { content: ''; position: absolute; right: 0; left: 0; bottom: -4px; height: 2px; background: #f2b5a8; }
+    .left p, .left li { font-size: 12px; line-height: 1.45; }
+    .left ul { padding-left: 14px; }
+    .left li { margin-bottom: 4px; }
+    .block { margin-bottom: 14px; }
+    .name { font-size: 55px; line-height: .9; color: #202530; text-transform: uppercase; font-weight: 800; }
+    .job { margin-top: 8px; font-size: 18px; font-weight: 600; color: #363c45; }
+    .title { margin-top: 14px; font-size: 29px; text-transform: uppercase; font-weight: 800; color: #3b4149; border-bottom: 2px solid #e8ad9f; padding-bottom: 3px; }
+    .summary { margin-top: 8px; font-size: 12px; line-height: 1.4; color: #3c4148; }
+    .entry { margin-top: 8px; margin-bottom: 12px; }
+    .entry h4 { font-size: 13px; font-weight: 800; text-transform: uppercase; }
+    .entry .desc { font-size: 11px; line-height: 1.35; margin-top: 2px; }
+  </style>
+</head>
+<body>
+{% set p = cv.personal_info %}
+{% set experiences = cv.experiences.all if cv.experiences is defined and cv.experiences.all is defined else (cv.experiences if cv.experiences is defined else []) %}
+{% set education = cv.education.all if cv.education is defined and cv.education.all is defined else (cv.education if cv.education is defined else []) %}
+{% set skills = cv.skills.all if cv.skills is defined and cv.skills.all is defined else (cv.skills if cv.skills is defined else []) %}
+{% set qualities = cv.qualities.all if cv.qualities is defined and cv.qualities.all is defined else (cv.qualities if cv.qualities is defined else []) %}
+{% set languages = cv.languages.all if cv.languages is defined and cv.languages.all is defined else (cv.languages if cv.languages is defined else []) %}
+{% set photo_url = cv.photo.url if cv.photo is defined and cv.photo and cv.photo.url is defined else (p.photo_data_url if p.photo_data_url is defined else '') %}
+<div class="sheet">
+  <aside class="left">
+    <div class="photo">{% if photo_url %}<img src="{{ photo_url }}" alt="Photo">{% else %}<div class="photo-fallback">PHOTO</div>{% endif %}</div>
+    <div class="block"><h3>Contact</h3><ul><li>{{ p.phone }}</li><li>{{ p.email }}</li><li>{{ p.address }}</li><li>{{ p.city }}</li></ul></div>
+    <div class="block"><h3>Compétences</h3><ul>{% for skill in skills|sort(attribute='order') %}<li>{{ skill.name }}</li>{% endfor %}</ul></div>
+    <div class="block"><h3>Qualites</h3><ul>{% for quality in qualities %}<li>{{ quality }}</li>{% endfor %}</ul></div>
+    <div class="block"><h3>Langues</h3><ul>{% for lang in languages %}<li>{{ lang.name }}{% if lang.level %} : {{ lang.level }}{% endif %}</li>{% endfor %}</ul></div>
+  </aside>
+
+  <main class="right">
+    <h1 class="name">{{ p.name }}</h1>
+    <p class="job">{{ p.job_title }}</p>
+    <h2 class="title">Profil</h2>
+    <p class="summary">{{ cv.summary }}</p>
+
+    <h2 class="title">Experience Professionnelle</h2>
+    {% for exp in experiences|sort(attribute='order') %}
+    <article class="entry"><h4>{{ exp.title }} - {{ exp.company }} | {{ exp.start_date }} - {% if exp.is_current %}Présent{% else %}{{ exp.end_date }}{% endif %}</h4><p class="desc">{{ exp.description }}</p></article>
+    {% endfor %}
+
+    <h2 class="title">Formation</h2>
+    {% for edu in education|sort(attribute='order') %}
+    <article class="entry"><h4>{{ edu.degree }} | {{ edu.year }}</h4><p class="desc">{{ edu.school }}</p></article>
+    {% endfor %}
+  </main>
+</div>
+</body>
+</html>

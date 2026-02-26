@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inscription | ProFolio</title>
+  <link rel="stylesheet" href="/static/css/auth.css" />
+</head>
+<body>
+  <div class="auth-page">
+    <div class="auth-bg">
+      <div class="auth-orb"></div>
+      <div class="auth-grid"></div>
+    </div>
+
+    <div class="lang-switcher-corner">
+      <button type="button" onclick="switchLanguage('fr')" class="lang-btn" id="lang-fr">FR</button>
+      <span>/</span>
+      <button type="button" onclick="switchLanguage('en')" class="lang-btn" id="lang-en">EN</button>
+    </div>
+
+    <div class="auth-card auth-card-wide">
+      <div class="auth-logo">
+        <a href="/">ProFolio</a>
+      </div>
+
+      <div class="auth-header">
+        <div class="auth-icon">
+          <i data-lucide="user-plus" style="width:24px;height:24px;color:#3B82F6"></i>
+        </div>
+        <h1 class="auth-title auth-title-sm" data-i18n="register.title">Créez votre compte</h1>
+        <p class="auth-subtitle" data-i18n="register.subtitle">Rejoignez ProFolio </p>
+      </div>
+
+      {% if error %}
+      <div class="auth-error">
+        <i data-lucide="alert-circle" style="width:16px;height:16px"></i>
+        {{ error }}
+      </div>
+      {% endif %}
+
+      <form method="post" id="register-form" novalidate>
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}" />
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" data-i18n="register.firstName">Prénom</label>
+            <input type="text" name="first_name" class="input" value="{{ form_data.first_name if form_data else '' }}" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="register.lastName">Nom</label>
+            <input type="text" name="last_name" class="input" value="{{ form_data.last_name if form_data else '' }}" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" data-i18n="field.email">Adresse email</label>
+          <input
+            type="email"
+            name="email"
+            class="input"
+            placeholder="vous@email.com"
+            value="{{ form_data.email if form_data else '' }}"
+            required
+            autocomplete="email"
+          />
+          <span class="field-error" id="register-email-error"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" data-i18n="register.username">Nom d'utilisateur</label>
+          <input
+            type="text"
+            name="username"
+            id="username-input"
+            class="input"
+            placeholder="jean_kodjo"
+            value="{{ form_data.username if form_data else '' }}"
+            required
+            autocomplete="username"
+          />
+          <span class="field-feedback" id="username-feedback"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" data-i18n="field.password">Mot de passe</label>
+          <div class="input-wrapper">
+            <input
+              type="password"
+              name="password"
+              id="password-input"
+              class="input"
+              placeholder="Min. 8 caractères"
+              required
+              autocomplete="new-password"
+            />
+            <button type="button" class="toggle-password" onclick="togglePassword('password-input', 'eye-icon-register')">
+              <i data-lucide="eye" id="eye-icon-register" style="width:16px;height:16px;color:#64748B"></i>
+            </button>
+          </div>
+          <div class="password-strength">
+            <div class="strength-bar">
+              <span class="strength-segment"></span>
+              <span class="strength-segment"></span>
+              <span class="strength-segment"></span>
+              <span class="strength-segment"></span>
+            </div>
+            <span id="strength-label" class="strength-label"></span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" data-i18n="register.password2">Confirmer le mot de passe</label>
+          <input
+            type="password"
+            name="password2"
+            id="password2-input"
+            class="input"
+            placeholder="••••••••"
+            required
+            autocomplete="new-password"
+          />
+          <span class="field-feedback" id="password2-feedback"></span>
+        </div>
+
+        <button type="button" class="referral-toggle" id="referral-toggle">
+          <span data-i18n="register.referralToggle">Vous avez un code de parrainage ? +</span>
+        </button>
+        <div class="referral-section" id="referral-section">
+          <div class="form-group">
+            <input
+              type="text"
+              name="referral_code"
+              id="referral-input"
+              maxlength="8"
+              class="input"
+              placeholder="Entrez le code"
+              value="{{ form_data.referral_code if form_data else '' }}"
+            />
+            <span class="field-feedback" id="referral-feedback"></span>
+          </div>
+        </div>
+
+        <label class="terms-row">
+          <input type="checkbox" name="terms" value="1" required />
+          <span data-i18n="register.terms">J'accepte les conditions d'utilisation et la politique de confidentialité</span>
+        </label>
+
+        <button type="submit" class="btn-primary btn-full" id="register-submit-btn">
+          <span id="register-btn-text" data-i18n="register.submit">Créer mon compte</span>
+          <span id="register-btn-spinner" class="btn-spinner" style="display:none">
+            <i data-lucide="loader-2" class="spinning" style="width:16px;height:16px"></i>
+            <span data-i18n="register.loading">Création en cours...</span>
+          </span>
+        </button>
+      </form>
+
+      <p class="auth-switch auth-switch-spaced">
+        <span data-i18n="register.switchText">Déjà un compte ?</span>
+        <a href="/login/" class="auth-switch-link" data-i18n="register.switchLink">Se connecter →</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="/static/js/auth.js"></script>
+</body>
+</html>

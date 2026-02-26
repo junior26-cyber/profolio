@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="csrf-token" content="{{ csrf_token }}" />
+  <title>Éditeur CV #{{ cv.id }} | ProFolio</title>
+  <link rel="stylesheet" href="/static/css/cv_builder.css" />
+  <link rel="stylesheet" href="/static/css/cv_models.css?v=20260225" />
+</head>
+<body>
+{% from "models/cv_previews.html" import cv_preview %}
+<div class="builder-page" data-cv-id="{{ cv.id }}">
+  <header class="builder-topbar">
+    <div class="top-left">
+      <a class="icon-btn" href="/dashboard/" aria-label="Retour dashboard">
+        <i data-lucide="arrow-left"></i>
+      </a>
+    </div>
+    <div class="top-center"></div>
+    <div class="top-right">
+      <button class="btn-ghost-small" type="button" id="cvBuildSaveBtn">💾 Sauvegarder</button>
+      <button class="btn-primary-small" type="button" id="cvBuildDownloadBtn">📥 Télécharger PDF</button>
+    </div>
+  </header>
+
+  <div class="builder-body">
+    <section class="builder-left">
+      <div class="form-section">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">Édition finale du CV</h2>
+            <p class="section-subtitle">Modifiez chaque section. Le template sélectionné garde son design.</p>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Nom complet</label>
+          <input id="edit-full-name" class="builder-input plain" type="text" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Poste visé</label>
+          <input id="edit-job-title" class="builder-input plain" type="text" />
+        </div>
+        <div class="optional-grid">
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input id="edit-email" class="builder-input plain" type="email" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Téléphone</label>
+            <input id="edit-phone" class="builder-input plain" type="text" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Adresse</label>
+            <input id="edit-address" class="builder-input plain" type="text" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ville</label>
+            <input id="edit-city" class="builder-input plain" type="text" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">LinkedIn</label>
+            <input id="edit-linkedin" class="builder-input plain" type="text" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">GitHub</label>
+            <input id="edit-github" class="builder-input plain" type="text" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Résumé professionnel</label>
+          <textarea id="edit-summary" class="builder-input plain" style="min-height:92px;resize:vertical;"></textarea>
+        </div>
+
+        <div class="form-group">
+          <div class="section-header" style="padding:0;border:none;margin-bottom:8px;">
+            <h3 class="section-title" style="font-size:14px;">Expériences</h3>
+            <button id="addExperienceBtn" class="btn-ghost-small" type="button">+ Ajouter</button>
+          </div>
+          <div id="experiencesList" class="mini-list"></div>
+        </div>
+
+        <div class="form-group">
+          <div class="section-header" style="padding:0;border:none;margin-bottom:8px;">
+            <h3 class="section-title" style="font-size:14px;">Formation</h3>
+            <button id="addEducationBtn" class="btn-ghost-small" type="button">+ Ajouter</button>
+          </div>
+          <div id="educationList" class="mini-list"></div>
+        </div>
+
+        <div class="form-group">
+          <div class="section-header" style="padding:0;border:none;margin-bottom:8px;">
+            <h3 class="section-title" style="font-size:14px;">Compétences</h3>
+            <button id="addSkillBtn" class="btn-ghost-small" type="button">+ Ajouter</button>
+          </div>
+          <div id="skillsList" class="mini-list"></div>
+        </div>
+
+        <div class="form-group">
+          <div class="section-header" style="padding:0;border:none;margin-bottom:8px;">
+            <h3 class="section-title" style="font-size:14px;">Langues</h3>
+            <button id="addLanguageBtn" class="btn-ghost-small" type="button">+ Ajouter</button>
+          </div>
+          <div id="languagesList" class="mini-list"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Centres d'intérêt (séparés par virgule)</label>
+          <input id="edit-interests" class="builder-input plain" type="text" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Qualités (séparées par virgule)</label>
+          <input id="edit-qualities" class="builder-input plain" type="text" />
+        </div>
+
+        <div class="form-group">
+          <div class="section-header" style="padding:0;border:none;margin-bottom:8px;">
+            <h3 class="section-title" style="font-size:14px;">Champs personnalisés</h3>
+            <button id="addCustomFieldBtn" class="btn-ghost-small" type="button">+ Ajouter un champ</button>
+          </div>
+          <div id="customFieldsList" class="mini-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="builder-right">
+      <div class="preview-body">
+        <div class="cv-a4-container" id="a4Container">
+          <iframe id="cv-build-preview-frame" title="Aperçu CV final"></iframe>
+        </div>
+      </div>
+      <div id="modelsPanel" class="models-panel hidden">
+        <div class="models-track">
+          {% for m in models_gallery %}
+          <button type="button" class="model-card {% if selected_model_id == m.id %}active{% endif %}" data-model-id="{{ m.id }}" data-model-name="{{ m.name }}">
+            <div class="model-card-preview">
+              {{ cv_preview(m.id, m.name) }}
+            </div>
+            <span>{{ m.name }}</span>
+          </button>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="preview-bottom-dock">
+        <button id="openModelsBtn" class="dock-btn dock-main" type="button">Modèles</button>
+        <button id="zoom-out" class="dock-btn" type="button"><i data-lucide="minus"></i></button>
+        <button id="zoom-in" class="dock-btn" type="button"><i data-lucide="plus"></i></button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script id="cvEditorData" type="application/json">{{ editor_data|tojson }}</script>
+<script id="cvTemplateData" type="application/json">{{ selected_model_id|tojson }}</script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="/static/js/build.js?v=20260226"></script>
+</body>
+</html>

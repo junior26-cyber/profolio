@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=595px">
+  <title>CV — {{ cv.personal_info.name }}</title>
+  <style>
+    @page { size: A4; margin: 0; }
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'DM Sans', sans-serif; }
+    h1, h2, h3, h4, p, li, span, div { overflow-wrap: anywhere; word-break: break-word; }
+    body { width: 595px; min-height: 842px; background: #eef1f5; color: #1f2937; }
+    .sheet { width: 595px; min-height: 842px; background: #eef1f5; position: relative; }
+    .header-band { position: relative; margin: 30px 0 0; height: 82px; background: #5b8fd0; box-shadow: 0 7px 0 rgba(31, 69, 118, 0.3); }
+    .photo-card { position: absolute; left: 48px; top: -16px; width: 108px; height: 136px; border: 2px solid #d7dbe2; background: #f5f6f8; padding: 7px; }
+    .photo-card img { width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+    .photo-fallback { width: 100%; height: 100%; border: 1px dashed #94a3b8; color: #64748b; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+    .id-top { position: absolute; right: 26px; top: 10px; text-align: right; color: #fff; }
+    .id-top .name { font-size: 21px; font-weight: 700; line-height: 1; text-transform: uppercase; }
+    .id-top .job { font-size: 12px; margin-top: 4px; font-weight: 500; }
+    .id-top .meta { font-size: 10px; margin-top: 8px; line-height: 1.32; }
+    .content { padding: 48px 38px 24px 78px; }
+    .section { margin-bottom: 18px; }
+    .section h2 { font-size: 14px; font-weight: 800; text-transform: uppercase; color: #4f84cb; margin-bottom: 8px; letter-spacing: .4px; }
+    .row { display: table; width: 100%; margin-bottom: 8px; }
+    .period, .entry { display: table-cell; vertical-align: top; }
+    .period { width: 84px; font-size: 11px; font-weight: 700; color: #111827; line-height: 1.25; }
+    .entry h3 { font-size: 12px; font-weight: 700; text-transform: uppercase; }
+    .entry .meta { font-size: 11px; font-style: italic; color: #374151; margin-bottom: 2px; }
+    .entry .desc { font-size: 11px; line-height: 1.35; }
+    .single { font-size: 11px; line-height: 1.4; margin-bottom: 3px; }
+  </style>
+</head>
+<body>
+{% set p = cv.personal_info %}
+{% set experiences = cv.experiences.all if cv.experiences is defined and cv.experiences.all is defined else (cv.experiences if cv.experiences is defined else []) %}
+{% set education = cv.education.all if cv.education is defined and cv.education.all is defined else (cv.education if cv.education is defined else []) %}
+{% set languages = cv.languages.all if cv.languages is defined and cv.languages.all is defined else (cv.languages if cv.languages is defined else []) %}
+{% set interests = cv.interests.all if cv.interests is defined and cv.interests.all is defined else (cv.interests if cv.interests is defined else []) %}
+{% set photo_url = cv.photo.url if cv.photo is defined and cv.photo and cv.photo.url is defined else (p.photo_data_url if p.photo_data_url is defined else '') %}
+<div class="sheet">
+  <div class="header-band">
+    <div class="photo-card">{% if photo_url %}<img src="{{ photo_url }}" alt="Photo">{% else %}<div class="photo-fallback">PHOTO</div>{% endif %}</div>
+    <div class="id-top">
+      <div class="name">{{ p.name }}</div>
+      <div class="job">{{ p.job_title }}</div>
+      <div class="meta">{{ p.city }}<br>{{ p.phone }}<br>{{ p.email }}</div>
+    </div>
+  </div>
+
+  <main class="content">
+    <section class="section">
+      <h2>Formations</h2>
+      {% for edu in education|sort(attribute='order') %}
+      <div class="row">
+        <div class="period">{{ edu.year }}</div>
+        <div class="entry"><h3>{{ edu.degree }}</h3><p class="meta">{{ edu.school }}</p></div>
+      </div>
+      {% endfor %}
+    </section>
+
+    <section class="section">
+      <h2>Langues</h2>
+      {% for lang in languages %}<p class="single"><strong>{{ lang.name }}:</strong> {{ lang.level }}</p>{% endfor %}
+    </section>
+
+    <section class="section">
+      <h2>Experiences Professionnelles</h2>
+      {% for exp in experiences|sort(attribute='order') %}
+      <div class="row">
+        <div class="period">{{ exp.start_date }}<br>{% if exp.is_current %}Présent{% else %}{{ exp.end_date }}{% endif %}</div>
+        <div class="entry">
+          <h3>{{ exp.title }}</h3>
+          <p class="meta">{{ exp.company }}{% if exp.location %}, {{ exp.location }}{% endif %}</p>
+          <p class="desc">{{ exp.description }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </section>
+
+    <section class="section">
+      <h2>Centres d’Interets</h2>
+      <p class="single">{% for interest in interests %}{{ interest }}{% if not loop.last %}, {% endif %}{% endfor %}</p>
+    </section>
+  </main>
+</div>
+</body>
+</html>

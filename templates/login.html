@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Connexion | ProFolio</title>
+  <link rel="stylesheet" href="/static/css/auth.css" />
+</head>
+<body>
+  <div class="auth-page">
+    <div class="auth-bg">
+      <div class="auth-orb"></div>
+      <div class="auth-grid"></div>
+    </div>
+
+    <div class="lang-switcher-corner">
+      <button type="button" onclick="switchLanguage('fr')" class="lang-btn" id="lang-fr">FR</button>
+      <span>/</span>
+      <button type="button" onclick="switchLanguage('en')" class="lang-btn" id="lang-en">EN</button>
+    </div>
+
+    <div class="auth-card">
+      <div class="auth-logo">
+        <a href="/">ProFolio</a>
+      </div>
+
+      <div class="auth-header">
+        <div class="auth-icon">
+          <i data-lucide="lock" style="width:24px;height:24px;color:#3B82F6"></i>
+        </div>
+        <h1 class="auth-title" data-i18n="login.title">Bon retour </h1>
+        <p class="auth-subtitle" data-i18n="login.subtitle">Connectez-vous à votre compte</p>
+      </div>
+
+      {% if error %}
+      <div class="auth-error">
+        <i data-lucide="alert-circle" style="width:16px;height:16px"></i>
+        {{ error }}
+      </div>
+      {% endif %}
+
+      <form method="post" id="login-form" novalidate>
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}" />
+        <div class="form-group">
+          <label class="form-label" data-i18n="field.email">Adresse email</label>
+          <input
+            type="email"
+            name="email"
+            class="input"
+            placeholder="vous@email.com"
+            value="{{ form_data.email if form_data else '' }}"
+            required
+            autocomplete="email"
+          />
+          <span class="field-error" id="email-error"></span>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label-row">
+            <label class="form-label" data-i18n="field.password">Mot de passe</label>
+            <a href="/forgot-password/" class="forgot-link" data-i18n="login.forgot">Mot de passe oublié ?</a>
+          </div>
+          <div class="input-wrapper">
+            <input
+              type="password"
+              name="password"
+              id="password-input"
+              class="input"
+              placeholder="••••••••"
+              required
+              autocomplete="current-password"
+            />
+            <button type="button" class="toggle-password" onclick="togglePassword('password-input', 'eye-icon')">
+              <i data-lucide="eye" id="eye-icon" style="width:16px;height:16px;color:#64748B"></i>
+            </button>
+          </div>
+          <span class="field-error" id="password-error"></span>
+        </div>
+
+        <button type="submit" class="btn-primary btn-full" id="submit-btn">
+          <span id="btn-text" data-i18n="login.submit">Se connecter</span>
+          <span id="btn-spinner" class="btn-spinner" style="display:none">
+            <i data-lucide="loader-2" class="spinning" style="width:16px;height:16px"></i>
+            <span data-i18n="login.loading">Connexion en cours...</span>
+          </span>
+        </button>
+      </form>
+
+      <div class="auth-divider">
+        <span data-i18n="common.or">ou</span>
+      </div>
+
+      <p class="auth-switch">
+        <span data-i18n="login.switchText">Pas encore de compte ?</span>
+        <a href="/register/" class="auth-switch-link" data-i18n="login.switchLink">Créer un compte →</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="/static/js/auth.js"></script>
+</body>
+</html>

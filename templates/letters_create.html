@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="csrf-token" content="{{ csrf_token }}" />
+  <title>Créer Lettre | ProFolio</title>
+  <link rel="stylesheet" href="/static/css/letter_builder.css" />
+</head>
+<body>
+<div class="letter-page">
+  <header class="letter-topbar">
+    <div class="top-left">
+      <a href="/dashboard/" class="crumb-link">
+        <i data-lucide="arrow-left"></i>
+        <span>Dashboard</span>
+      </a>
+    </div>
+
+    <div class="top-center">
+      <span class="center-title">Création de lettre</span>
+    </div>
+
+    <div class="top-right">
+      <button class="btn-ghost-small" type="button" id="letterSaveBtn">💾 Sauvegarder</button>
+      <button class="btn-primary-small" type="button" id="topDownloadBtn">📥 Télécharger PDF</button>
+    </div>
+  </header>
+
+  <div class="letter-body">
+    <section class="letter-left">
+      <div class="form-wrap">
+        <h2>Informations de la lettre</h2>
+        <p>3 informations suffisent — Gemini rédige tout le reste</p>
+
+        <input type="hidden" id="selectedTemplate" value="elite" />
+        <input type="hidden" id="currentLetterId" value="{{ letter_draft.id if letter_draft else '' }}" />
+        <input type="hidden" id="initialTone" value="{{ letter_draft.tone if letter_draft else 'formel' }}" />
+
+        <div class="form-group">
+          <label>Nom de l'entreprise *</label>
+          <div class="input-with-icon">
+            <i data-lucide="building-2" class="input-icon"></i>
+            <input id="company" class="letter-input" type="text" placeholder="Ex: Google, ONG Espoir, Banque Atlantique..." value="{{ letter_draft.company if letter_draft else '' }}" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Poste visé *</label>
+          <div class="input-with-icon">
+            <i data-lucide="briefcase" class="input-icon"></i>
+            <input id="position" class="letter-input" type="text" placeholder="Ex: Développeur Backend, Comptable, Infirmier..." value="{{ letter_draft.position if letter_draft else '' }}" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Ton de la lettre *</label>
+          <div class="tone-grid">
+            <button type="button" class="tone-card active" data-tone="formel">
+              <strong>🎩 Formel</strong>
+              <small>Traditionnel et professionnel</small>
+            </button>
+            <button type="button" class="tone-card" data-tone="dynamique">
+              <strong>⚡ Dynamique</strong>
+              <small>Moderne et percutant</small>
+            </button>
+            <button type="button" class="tone-card" data-tone="creatif">
+              <strong>✨ Créatif</strong>
+              <small>Original et mémorable</small>
+            </button>
+          </div>
+        </div>
+
+        <button type="button" id="cvToggle" class="cv-toggle">Personnaliser depuis mon CV +</button>
+        <div id="cvSection" class="cv-section hidden">
+          <label>Sélectionner un CV</label>
+          {% if user_cvs %}
+          <div class="cv-list">
+            {% for cv in user_cvs %}
+            <button type="button" class="cv-card {% if letter_draft and letter_draft.linked_cv_id == cv.id %}active{% endif %}" data-cv-id="{{ cv.id }}">
+              <span class="cv-title">{{ cv.title }}</span>
+              <span class="cv-meta">{{ cv.template_name }}</span>
+            </button>
+            {% endfor %}
+          </div>
+          {% else %}
+          <a href="/cv/create/" class="empty-cv-link">Créer un CV d'abord →</a>
+          {% endif %}
+          <input type="hidden" id="selectedCvId" value="{{ letter_draft.linked_cv_id if letter_draft and letter_draft.linked_cv_id else '' }}" />
+          <div id="cvSelectedBadge" class="cv-selected hidden">✓ CV sélectionné — la lettre sera personnalisée</div>
+        </div>
+
+        <div class="form-group">
+          <label>Nom du recruteur (optionnel)</label>
+          <div class="input-with-icon">
+            <i data-lucide="user-round" class="input-icon"></i>
+            <input id="recruiter" class="letter-input" type="text" placeholder="Ex: M. Koffi, Mme Mensah..." value="{{ letter_draft.recruiter if letter_draft else '' }}" />
+          </div>
+        </div>
+
+        <button id="generate-btn" class="btn-generate" type="button">
+          <i data-lucide="sparkles"></i>
+          <span id="btn-text">✍️ Générer ma lettre</span>
+          <span id="btn-spinner" class="btn-spinner hidden">
+            <i data-lucide="loader-2" class="spinning"></i>
+            <span id="loading-text">Analyse de votre profil...</span>
+          </span>
+        </button>
+        <div id="generate-progress" class="generate-progress hidden">
+          <div id="progress-bar" class="generate-progress-bar"></div>
+        </div>
+        <p class="btn-hint">✦ Lettre professionnelle en moins de 15 secondes</p>
+
+        <section id="edit-zone" class="edit-zone {% if not letter_draft %}hidden{% endif %}">
+          <div class="success-banner">✓ Lettre générée ! Cliquez sur le texte pour modifier</div>
+          <div class="editor-toolbar">
+            <button type="button" class="toolbar-btn" id="regenBtn">✨ Régénérer</button>
+            <button type="button" class="toolbar-btn" id="improveToneBtn">✨ Améliorer le ton</button>
+            <button type="button" class="toolbar-btn" id="fixGrammarBtn">✨ Corriger les fautes</button>
+            <span id="word-count">0 mots</span>
+          </div>
+          <textarea id="letter-textarea" class="letter-textarea">{{ letter_draft.content if letter_draft else '' }}</textarea>
+          <a href="{{ '/letters/download/' ~ letter_draft.id ~ '/' if letter_draft else '#' }}" id="downloadLink" class="btn-primary-download">📥 Télécharger PDF</a>
+        </section>
+      </div>
+    </section>
+
+    <section class="letter-right">
+      <div class="preview-toolbar">
+        <span>Aperçu en direct</span>
+        <div class="preview-actions">
+          <button id="zoom-out" class="preview-btn" type="button"><i data-lucide="minus"></i></button>
+          <button id="zoom-in" class="preview-btn" type="button"><i data-lucide="plus"></i></button>
+          <button class="preview-btn" type="button"><i data-lucide="maximize-2"></i></button>
+        </div>
+      </div>
+      <div class="preview-body">
+        <div class="letter-a4" id="letterA4">
+          <iframe id="letter-preview-frame" title="Aperçu lettre"></iframe>
+          <div id="preview-empty" class="preview-empty">
+            <i data-lucide="mail" style="width:48px;height:48px;color:#D1D5DB"></i>
+            <h3>Votre lettre apparaîtra ici</h3>
+            <p>Remplissez les champs et cliquez sur Générer</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="/static/js/letter_builder.js"></script>
+</body>
+</html>

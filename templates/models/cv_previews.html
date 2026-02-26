@@ -1,0 +1,11 @@
+{% macro cv_preview(model_id, label="CV") -%}
+<div class="cv-template-frame">
+  <iframe
+    class="cv-template-frame__view"
+    title="Aperçu {{ label }}"
+    src="/api/cv/template-preview/{{ model_id }}"
+    loading="eager"
+    scrolling="no"
+  ></iframe>
+</div>
+{%- endmacro %}

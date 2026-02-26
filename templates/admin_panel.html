@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel | ProFolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/admin_panel.css?v=20260226" />
+</head>
+<body>
+  <div class="admin-bg"></div>
+  <main class="admin-shell">
+    <header class="admin-head reveal">
+      <div>
+        <p class="eyebrow">ProFolio Control</p>
+        <h1>Dashboard Administrateur</h1>
+        <p class="subtitle">Vue consolidée des comptes, créations CV et lettres.</p>
+      </div>
+      <div class="head-actions">
+        <span class="pill">{{ period_label }}</span>
+        <a href="/dashboard/" class="btn-back">Retour Dashboard</a>
+      </div>
+    </header>
+
+    <section class="kpis-grid reveal">
+      <article class="kpi-card">
+        <p class="kpi-label">Utilisateurs</p>
+        <h2 class="kpi-value" data-count="{{ total_users }}">0</h2>
+        <p class="kpi-meta">+{{ users_30d }} sur 30 jours</p>
+      </article>
+      <article class="kpi-card">
+        <p class="kpi-label">CV générés</p>
+        <h2 class="kpi-value" data-count="{{ total_resumes }}">0</h2>
+        <p class="kpi-meta">+{{ resumes_30d }} sur 30 jours</p>
+      </article>
+      <article class="kpi-card">
+        <p class="kpi-label">Lettres créées</p>
+        <h2 class="kpi-value" data-count="{{ total_letters }}">0</h2>
+        <p class="kpi-meta">+{{ letters_30d }} sur 30 jours</p>
+      </article>
+      <article class="kpi-card accent">
+        <p class="kpi-label">CV / utilisateur</p>
+        <h2 class="kpi-value" data-float="{{ cv_per_user }}">0</h2>
+        <p class="kpi-meta">Moyenne globale</p>
+      </article>
+    </section>
+
+    <section class="charts-grid">
+      <article class="panel reveal">
+        <div class="panel-head">
+          <h3>Activité 7 jours</h3>
+          <p>Comptes, CV et lettres</p>
+        </div>
+        <div class="line-chart-wrap">
+          <svg id="activityChart" viewBox="0 0 760 280" preserveAspectRatio="none" aria-label="Graphique activité"></svg>
+        </div>
+        <div class="chart-legend">
+          <span><i class="dot users"></i>Utilisateurs</span>
+          <span><i class="dot resumes"></i>CV</span>
+          <span><i class="dot letters"></i>Lettres</span>
+        </div>
+      </article>
+
+      <article class="panel reveal">
+        <div class="panel-head">
+          <h3>Templates les plus utilisés</h3>
+          <p>Top 5</p>
+        </div>
+        <div class="bars-wrap">
+          {% if top_templates %}
+            {% for item in top_templates %}
+              <div class="bar-row" style="--value: {{ item.count }}; --rank: {{ loop.index0 }};">
+                <span>{{ item.name }}</span>
+                <strong>{{ item.count }}</strong>
+                <div class="bar-track"><i class="bar-fill"></i></div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <p class="empty">Aucune donnée template pour l'instant.</p>
+          {% endif %}
+        </div>
+      </article>
+    </section>
+
+    <section class="tables-grid">
+      <article class="panel reveal">
+        <div class="panel-head">
+          <h3>Derniers CV créés</h3>
+        </div>
+        <div class="table-list">
+          {% for cv in recent_resumes %}
+            <div class="row-item">
+              <div>
+                <p class="row-title">{{ cv.input_data.job_title or 'CV sans titre' }}</p>
+                <p class="row-sub">{{ cv.user.username }} · #{{ cv.id }}</p>
+              </div>
+              <time>{{ cv.created_at.strftime('%d/%m %H:%M') }}</time>
+            </div>
+          {% else %}
+            <p class="empty">Aucun CV récent.</p>
+          {% endfor %}
+        </div>
+      </article>
+
+      <article class="panel reveal">
+        <div class="panel-head">
+          <h3>Dernières lettres créées</h3>
+        </div>
+        <div class="table-list">
+          {% for letter in recent_letters %}
+            <div class="row-item">
+              <div>
+                <p class="row-title">{{ letter.title or 'Lettre sans titre' }}</p>
+                <p class="row-sub">{{ letter.user.username }} · #{{ letter.id }}</p>
+              </div>
+              <time>{{ letter.created_at.strftime('%d/%m %H:%M') }}</time>
+            </div>
+          {% else %}
+            <p class="empty">Aucune lettre récente.</p>
+          {% endfor %}
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script id="chartLabels" type="application/json">{{ daily_labels|tojson }}</script>
+  <script id="chartUsers" type="application/json">{{ daily_users|tojson }}</script>
+  <script id="chartResumes" type="application/json">{{ daily_resumes|tojson }}</script>
+  <script id="chartLetters" type="application/json">{{ daily_letters|tojson }}</script>
+  <script src="/static/js/admin_panel.js?v=20260226"></script>
+</body>
+</html>

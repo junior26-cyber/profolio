@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ProFolio | Votre CV professionnel en 2 minutes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css?v=20260222" />
+  <link rel="stylesheet" href="/static/css/cv_models.css?v=20260225" />
+</head>
+<body>
+  {% from "models/cv_previews.html" import cv_preview %}
+  <div class="bg-grid"></div>
+  <a href="/" class="logo logo-corner">ProFolio</a>
+  <header class="navbar" id="navbar">
+    <div class="nav-wrap nav-wrap-home">
+      <div class="nav-spacer"></div>
+      <nav class="nav-center">
+        <div class="tools-wrap">
+          <button id="toolsToggle" class="tools-toggle" data-i18n="nav.tools">Outils</button>
+          <div id="toolsMenu" class="tools-menu hidden">
+            <a href="/cv/create/" data-i18n="nav.cv">CV</a>
+            <a href="/letters/create/" data-i18n="nav.letter">Lettre de motivation</a>
+            <a href="#" data-i18n="nav.portfolio" data-portfolio-disabled="1">Portfolio</a>
+          </div>
+        </div>
+        <div class="pricing-wrap">
+          <button id="pricingToggle" class="tools-toggle" data-i18n="nav.pricing">Tarifs</button>
+          <div id="pricingMenu" class="pricing-menu hidden">
+            <div class="pricing-tabs pricing-tabs-nav">
+              <button class="btn-ghost tab-btn-nav active" data-plan="monthly">Mensuel</button>
+              <button class="btn-ghost tab-btn-nav" data-plan="yearly">Annuel</button>
+            </div>
+            <div id="pricingNavContent" class="pricing-content"></div>
+          </div>
+        </div>
+        <a href="#faq">FAQ</a>
+      </nav>
+      <div class="nav-right">
+        <button id="themeToggle" class="btn-ghost btn-small" aria-label="Basculer le thème">☀️</button>
+        <button id="langToggle" class="btn-ghost btn-small">EN</button>
+        <a href="/login/" class="btn-ghost" data-i18n="nav.login">Se connecter</a>
+        <a href="/cv/create/" class="btn-primary" data-i18n="nav.start">Créer mon CV</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero container">
+      <div class="hero-glow"></div>
+      <h1 data-i18n="hero.title">Votre CV professionnel en 2 minutes.</h1>
+      <p data-i18n="hero.subtitle">Choisissez un template. Remplissez 5 champs. L'IA fait le reste.</p>
+      <div class="hero-cta">
+        <a href="/cv/create/" class="btn-primary" data-i18n="hero.cta1">Creer mon CV maintenant</a>
+      </div>
+    </section>
+
+    <section class="container" id="cv-showcase">
+      <div class="section-head">
+      </div>
+      <div class="templates-stage" data-cv-carousel>
+        <button class="carousel-nav prev" type="button" aria-label="Précédent" data-cv-prev>‹</button>
+        <div class="templates-viewport">
+          <div class="templates-track" data-cv-track>
+            {% for cv in home_cv_examples %}
+            <article class="template-slide" data-cv-card>
+              <div class="template-image-wrap">
+                {{ cv_preview(cv.model_id, cv.name) }}
+              </div>
+              <div class="home-cv-action">
+                <a class="btn-primary" href="/cv/create/?template={{ cv.model_id }}">Utiliser ce modèle</a>
+              </div>
+            </article>
+            {% endfor %}
+          </div>
+        </div>
+        <button class="carousel-nav next" type="button" aria-label="Suivant" data-cv-next>›</button>
+      </div>
+      <div class="carousel-dots" data-cv-dots></div>
+    </section>
+
+    <section class="container" id="how-it-works">
+      <div class="section-head">
+        <h2 data-i18n="how.title">Comment ça marche</h2>
+      </div>
+      <div class="cards-3 steps-grid">
+        <article class="card step-card">
+          <span class="step-pill" data-i18n="how.step1.pill">Étape 1</span>
+          <h3 data-i18n="how.step1.title">Choisis un modèle</h3>
+          <p data-i18n="how.step1.desc">Parcours les exemples de CV et sélectionne le design qui correspond à ton style.</p>
+        </article>
+        <article class="card step-card">
+          <span class="step-pill" data-i18n="how.step2.pill">Étape 2</span>
+          <h3 data-i18n="how.step2.title">Remplis 5 champs</h3>
+          <p data-i18n="how.step2.desc">Nom, poste, expérience, compétences, ville. Le formulaire est ultra-rapide.</p>
+        </article>
+        <article class="card step-card">
+          <span class="step-pill" data-i18n="how.step3.pill">Étape 3</span>
+          <h3 data-i18n="how.step3.title">Génère et télécharge</h3>
+          <p data-i18n="how.step3.desc">L' IA crée ton CV complet. Tu ajustes si besoin puis tu exportes en PDF.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="container" id="faq">
+      <h2 data-i18n="faq.title">FAQ</h2>
+      <div class="faq-list">
+        <details class="card faq-item">
+          <summary data-i18n="faq.q1.q">C'est quoi ProFolio exactement ?</summary>
+          <p data-i18n="faq.q1.a">ProFolio est une plateforme qui te permet de créer un CV professionnel, une lettre de motivation et un portfolio en ligne en moins de 2 minutes, grâce à l'intelligence artificielle.</p>
+        </details>
+        <details class="card faq-item">
+          <summary data-i18n="faq.q2.q">Est-ce vraiment gratuit ?</summary>
+          <p data-i18n="faq.q2.a">Oui, la création de CV avec le formulaire rapide (5 champs) est 100% gratuite. Les fonctionnalités avancées (import LinkedIn, amélioration de CV existant, templates premium) sont disponibles avec l'offre Premium.</p>
+        </details>
+        <details class="card faq-item">
+          <summary data-i18n="faq.q3.q">Ai-je besoin de compétences en informatique ou en design ?</summary>
+          <p data-i18n="faq.q3.a">Aucune. Tu remplis 5 champs simples, tu cliques sur un bouton — l'IA génère tout le reste automatiquement.</p>
+        </details>
+        <details class="card faq-item">
+          <summary data-i18n="faq.q4.q">L'IA peut-elle générer mon CV en anglais ?</summary>
+          <p data-i18n="faq.q4.a">Oui. ProFolio est entièrement bilingue (Français / Anglais). L'IA génère le contenu dans la langue que tu choisis.</p>
+        </details>
+        <details class="card faq-item">
+          <summary data-i18n="faq.q5.q">Le CV généré est-il personnalisé ou générique ?</summary>
+          <p data-i18n="faq.q5.a">Il est personnalisé à partir de tes informations. L'IA adapte le ton, les formulations et la mise en valeur de tes compétences selon ton profil et le poste visé.</p>
+        </details>
+        <details class="card faq-item">
+          <summary data-i18n="faq.q6.q">Puis-je changer de template après avoir créé mon CV ?</summary>
+          <p data-i18n="faq.q6.a">Oui, tu peux changer de template à tout moment sans perdre tes données.</p>
+        </details>
+        <details class="card faq-item">
+          <summary data-i18n="faq.q7.q">Dans quel format puis-je télécharger mon CV ?</summary>
+          <p data-i18n="faq.q7.a">Ton CV est exporté en PDF, prêt à envoyer à un recruteur.</p>
+        </details>
+        <details class="card faq-item">
+          <summary data-i18n="faq.q8.q">Y a-t-il un filigrane sur le PDF gratuit ?</summary>
+          <p data-i18n="faq.q8.a">Les CVs gratuits incluent une petite mention discrète "Créé avec ProFolio". Les CVs premium sont exportés sans aucune mention.</p>
+        </details>
+        <details class="card faq-item">
+          <summary data-i18n="faq.q9.q">Puis-je gagner du Premium sans payer ?</summary>
+          <p data-i18n="faq.q9.a">Oui ! En invitant des amis via ton lien de parrainage, tu gagnes des jours Premium gratuitement.</p>
+        </details>
+        <details class="card faq-item">
+          <summary data-i18n="faq.q10.q">Qui peut voir mon portfolio public ?</summary>
+          <p data-i18n="faq.q10.a">Ton portfolio a une URL publique que tu partages toi-même. Il n'est pas listé dans un annuaire — seules les personnes avec le lien peuvent y accéder.</p>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-shell">
+      <div class="footer-links-grid">
+        <div class="footer-col">
+          <h4 data-i18n="footer.tools">Outils</h4>
+          <a href="/cv/create/" data-i18n="footer.product.cv">CV professionnel</a>
+          <a href="/letters/create/" data-i18n="footer.product.letter">Lettre de motivation</a>
+          <a href="#" data-i18n="footer.product.portfolio" data-portfolio-disabled="1">Portfolio</a>
+        </div>
+        <div class="footer-col">
+          <h4 data-i18n="footer.resources">Ressources</h4>
+          <a href="/cv/create/" data-i18n="footer.resources.cv_models">Modèles de CV</a>
+          <a href="#faq" data-i18n="footer.resources.faq">FAQ</a>
+          <a href="/letters/create/" data-i18n="footer.resources.letter_models">Modèles de lettre</a>
+          <a href="#how-it-works" data-i18n="footer.resources.how">Conseils</a>
+        </div>
+        <div class="footer-col">
+          <h4 data-i18n="footer.support">Service client</h4>
+          <a href="#faq" data-i18n="footer.resources.faq">FAQ</a>
+          <a href="mailto:contact@profolio.app" data-i18n="footer.contact_email">Contact</a>
+          <a href="#faq" data-i18n="footer.terms">Conditions générales</a>
+          <a href="#faq" data-i18n="footer.privacy">Politique de confidentialité</a>
+        </div>
+        <div class="footer-col">
+          <h4>ProFolio</h4>
+          <a href="/" data-i18n="footer.about">À propos</a>
+          <a href="/" data-i18n="footer.reviews">Avis</a>
+          <a href="/" data-i18n="footer.affiliation">Programme d'affiliation</a>
+        </div>
+        <div class="footer-apps">
+          <a href="#" class="store-badge" aria-label="App Store">
+            <img class="store-icon" src="/static/image/App-Store-Logo.png" alt="" />
+            <span class="store-text">
+              <small>Télécharger dans</small>
+              <strong>l'App Store</strong>
+            </span>
+          </a>
+          <a href="#" class="store-badge" aria-label="Google Play">
+            <img class="store-icon" src="/static/image/logo-du-magasin-google-play_1273375-804.avif" alt="" />
+            <span class="store-text">
+              <small>DISPONIBLE SUR</small>
+              <strong>Google Play</strong>
+            </span>
+          </a>
+        </div>
+      </div>
+
+      <div class="footer-socials">
+        <a href="#" aria-label="Instagram">IG</a>
+        <a href="#" aria-label="X">X</a>
+        <a href="#" aria-label="LinkedIn">in</a>
+        <a href="#" aria-label="YouTube">▶</a>
+      </div>
+
+      <div class="footer-copy">
+        <p data-i18n="footer.copyright">© 2026 ProFolio. Tous droits réservés.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script id="pricingData" type="application/json">{{ pricing_plans|tojson }}</script>
+  <script src="/static/js/app.js?v=20260222"></script>
+  <script>
+    document.addEventListener("click", function (event) {
+      const target = event.target.closest("[data-portfolio-disabled='1']");
+      if (!target) return;
+      event.preventDefault();
+      alert("La création de portfolio est temporairement désactivée. Bientôt disponible.");
+    });
+  </script>
+</body>
+</html>
