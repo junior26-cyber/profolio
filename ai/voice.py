@@ -1,5 +1,6 @@
 import json
 import base64
+import os
 from typing import Any
 
 from ai.client import generate
@@ -93,7 +94,7 @@ def transcribe_audio_bytes(audio_bytes: bytes, mime_type: str, lang: str) -> str
         if lang_code == "fr"
         else "Transcribe this audio to plain text only. No markdown, no explanation."
     )
-    model = genai.GenerativeModel("gemini-2.0-flash")
+    model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
     encoded = base64.b64encode(audio_bytes).decode("ascii")
     response = model.generate_content(
         [

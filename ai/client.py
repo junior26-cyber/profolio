@@ -20,7 +20,7 @@ class GeminiConfigurationError(RuntimeError):
 
 
 def generate(prompt: str) -> str:
-    """Simple call to Gemini 1.5 Flash."""
+    """Simple call to configured Gemini model."""
     if genai is None:
         raise GeminiConfigurationError(
             "google-generativeai is not installed. Run: pip install -r requirements.txt"
