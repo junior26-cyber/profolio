@@ -167,3 +167,11 @@ body { background: #080C14; color: #E2E8F0; }
   .item { flex-direction: column; align-items: flex-start; }
   .item-actions { width: 100%; }
 }
+
+@media (max-width: 480px) {
+  .dash-main { padding: 12px; }
+  .dash-sidebar { padding: 14px 12px; }
+  .hero-card h1 { font-size: 20px; }
+  .kpis { flex-wrap: wrap; }
+  .kpis article { min-width: calc(50% - 6px); }
+}

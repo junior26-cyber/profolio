@@ -466,6 +466,8 @@ body { background: #080C14; color: #E2E8F0; }
 
 @media (max-width: 768px) {
   .top-right { display: none; }
+  .letter-topbar { padding: 0 12px; height: auto; min-height: 56px; }
+  .center-title { display: none; }
   .letter-body { flex-direction: column; }
   .letter-left, .letter-right { width: 100%; }
   .letter-right { height: 420px; }
@@ -475,4 +477,5 @@ body { background: #080C14; color: #E2E8F0; }
   .template-cards { grid-template-columns: 1fr 1fr; }
   .preview-body { padding: 10px; }
   .letter-a4 { transform: scale(0.42); }
+  .form-wrap { padding: 14px 12px; }
 }

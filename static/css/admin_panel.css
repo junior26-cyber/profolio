@@ -224,3 +224,10 @@ h1 {
   .tables-grid { grid-template-columns: 1fr; }
   .admin-head { flex-direction: column; }
 }
+
+@media (max-width: 480px) {
+  .admin-shell { width: min(1200px, calc(100% - 16px)); margin: 16px auto 24px; }
+  .panel, .kpi-card { padding: 12px; }
+  .head-actions { width: 100%; justify-content: space-between; }
+  .row-item { flex-direction: column; align-items: flex-start; }
+}

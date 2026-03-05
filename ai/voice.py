@@ -1,8 +1,15 @@
 import json
+import base64
 from typing import Any
 
 from ai.client import generate
 from ai.generator import get_language_instruction
+from ai.client import GeminiConfigurationError
+
+try:
+    import google.generativeai as genai
+except ModuleNotFoundError:  # pragma: no cover
+    genai = None
 
 
 def _extract_json(text: str) -> dict[str, Any]:
@@ -70,3 +77,36 @@ JSON:
         "position": str(data.get("position", "")).strip(),
         "tone": tone,
     }
+
+
+def transcribe_audio_bytes(audio_bytes: bytes, mime_type: str, lang: str) -> str:
+    if not audio_bytes:
+        raise ValueError("Audio vide.")
+    if len(audio_bytes) > 10 * 1024 * 1024:
+        raise ValueError("Audio trop volumineux (max 10MB).")
+    if genai is None:
+        raise GeminiConfigurationError("google-generativeai est indisponible.")
+
+    lang_code = "fr" if lang not in {"fr", "en"} else lang
+    prompt = (
+        "Transcribe cet audio en texte brut, sans markdown, sans commentaire."
+        if lang_code == "fr"
+        else "Transcribe this audio to plain text only. No markdown, no explanation."
+    )
+    model = genai.GenerativeModel("gemini-2.0-flash")
+    encoded = base64.b64encode(audio_bytes).decode("ascii")
+    response = model.generate_content(
+        [
+            prompt,
+            {
+                "inline_data": {
+                    "mime_type": mime_type or "audio/webm",
+                    "data": encoded,
+                }
+            },
+        ]
+    )
+    text = (response.text or "").strip().replace("```", "")
+    if not text:
+        raise ValueError("Transcription vide.")
+    return text

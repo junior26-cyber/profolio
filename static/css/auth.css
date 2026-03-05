@@ -437,4 +437,14 @@ body {
     grid-template-columns: 1fr;
     gap: 0;
   }
+  .lang-switcher-corner {
+    top: 10px;
+    right: 10px;
+  }
+  .auth-page {
+    padding: 12px;
+  }
+  .auth-title, .auth-title-sm {
+    font-size: 22px;
+  }
 }

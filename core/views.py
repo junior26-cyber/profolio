@@ -25,7 +25,7 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 from ai.client import GeminiConfigurationError
 from ai.client import generate as gemini_generate
 from ai.generator import generate_cover_letter, generate_cv_content
-from ai.voice import extract_cv_from_voice, extract_letter_from_voice
+from ai.voice import extract_cv_from_voice, extract_letter_from_voice, transcribe_audio_bytes
 from core.models import Letter, Resume, UserProfile
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -1539,6 +1539,23 @@ def voice_extract_api(request: HttpRequest):
         else:
             fields = extract_cv_from_voice(transcript, lang)
         return JsonResponse({"success": True, "fields": fields})
+    except Exception as exc:
+        return JsonResponse({"success": False, "error": str(exc)}, status=500)
+
+
+@login_required(login_url="/login/")
+@require_POST
+def voice_transcribe_api(request: HttpRequest):
+    upload = request.FILES.get("audio")
+    lang = str(request.POST.get("lang", "fr")).strip().lower()
+    if lang not in {"fr", "en"}:
+        lang = "fr"
+    if not upload:
+        return JsonResponse({"success": False, "error": "Fichier audio manquant."}, status=400)
+    try:
+        audio_bytes = upload.read()
+        transcript = transcribe_audio_bytes(audio_bytes, upload.content_type or "audio/webm", lang)
+        return JsonResponse({"success": True, "transcript": transcript})
     except Exception as exc:
         return JsonResponse({"success": False, "error": str(exc)}, status=500)
 

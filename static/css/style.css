@@ -29,6 +29,7 @@ body.light-theme {
 
 * { box-sizing: border-box; font-family: "DM Sans", sans-serif; }
 html, body { margin: 0; background: var(--bg-base); color: var(--silver); scroll-behavior: smooth; }
+img, video, canvas, svg, iframe { max-width: 100%; }
 a { color: inherit; text-decoration: none; }
 .container { width: min(1120px, calc(100% - 32px)); margin: 0 auto; }
 
@@ -1005,4 +1006,16 @@ body.light-theme .pricing-content ul { color: #334155; }
   .cv-action-card { border-right: none; border-bottom: 1px solid #cfd4de; }
   .cv-action-card:last-child { border-bottom: none; }
   .cv-preview-content { min-height: 420px; }
+}
+
+@media (max-width: 480px) {
+  .container { width: min(1120px, calc(100% - 20px)); }
+  .nav-wrap { min-height: 64px; gap: 10px; }
+  .logo-corner { display: none; }
+  .hero { min-height: 42vh; }
+  .hero h1 { font-size: clamp(1.7rem, 9vw, 2.2rem); }
+  .btn-primary, .btn-ghost { width: 100%; text-align: center; }
+  .filters { top: 62px; }
+  .template-slide { min-height: 420px; }
+  .modal-content { width: calc(100% - 16px); }
 }

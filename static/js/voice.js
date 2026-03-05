@@ -1,5 +1,15 @@
 let recognition = null;
 let isListening = false;
+let mediaRecorder = null;
+let mediaStream = null;
+let recordedChunks = [];
+let activeMode = "browser";
+const VOICE_DEBUG_PREFIX = "[VoiceDebug]";
+
+function voiceDebug(message, extra = null) {
+  if (extra !== null) console.log(`${VOICE_DEBUG_PREFIX} ${message}`, extra);
+  else console.log(`${VOICE_DEBUG_PREFIX} ${message}`);
+}
 
 function getBridge() {
   return window.profolioVoiceBridge || {};
@@ -62,6 +72,37 @@ function hideVoiceFeedback() {
   if (feedback) feedback.style.display = "none";
 }
 
+function isSecureVoiceContext() {
+  if (window.isSecureContext) return true;
+  const host = window.location.hostname;
+  return host === "localhost" || host === "127.0.0.1" || host === "::1";
+}
+
+function stopMediaTracks() {
+  if (!mediaStream) return;
+  mediaStream.getTracks().forEach((track) => track.stop());
+  mediaStream = null;
+}
+
+async function ensureMicrophoneAccess() {
+  if (!navigator.mediaDevices?.getUserMedia) return false;
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream.getTracks().forEach((track) => track.stop());
+    return true;
+  } catch (err) {
+    voiceDebug("getUserMedia failed", { name: err?.name, message: err?.message });
+    const errors = {
+      NotAllowedError: "Microphone refusé. Autorisez l'accès micro dans le navigateur.",
+      NotFoundError: "Aucun microphone détecté.",
+      NotReadableError: "Le microphone est déjà utilisé par une autre application.",
+      SecurityError: "Contexte non sécurisé. Utilisez HTTPS ou localhost.",
+    };
+    showToast(errors[err?.name] || "Impossible d'accéder au microphone.", "error");
+    return false;
+  }
+}
+
 function setField(id, value) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -91,19 +132,10 @@ function fillFields(fields, mode) {
     if (fields.position) setField("position", fields.position);
     if (fields.tone) {
       const tone = String(fields.tone).toLowerCase();
-      if (typeof bridge.setTone === "function") {
-        bridge.setTone(tone);
-      } else {
-        document.querySelectorAll(".tone-card").forEach((card) => {
-          card.classList.toggle("active", card.dataset.tone === tone);
-        });
-      }
+      if (typeof bridge.setTone === "function") bridge.setTone(tone);
     }
   }
-
-  if (typeof bridge.schedulePreviewUpdate === "function") {
-    bridge.schedulePreviewUpdate();
-  }
+  if (typeof bridge.schedulePreviewUpdate === "function") bridge.schedulePreviewUpdate();
 }
 
 async function extractFromTranscript(transcript) {
@@ -133,30 +165,123 @@ async function extractFromTranscript(transcript) {
   }
 }
 
-function startVoice() {
+function shouldUseServerTranscription() {
+  const ua = navigator.userAgent || "";
+  const isLinux = /Linux/i.test(ua);
+  const isChromiumFamily = /Edg|Chrome|Chromium/i.test(ua);
+  return !recognition || (isLinux && isChromiumFamily);
+}
+
+function getPreferredMimeType() {
+  const types = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", "audio/ogg"];
+  for (const type of types) {
+    if (window.MediaRecorder && MediaRecorder.isTypeSupported(type)) return type;
+  }
+  return "";
+}
+
+async function transcribeServerAudio(blob) {
+  const formData = new FormData();
+  formData.append("audio", blob, "voice.webm");
+  formData.append("lang", document.documentElement.lang === "en" ? "en" : "fr");
+
+  const res = await fetch("/api/voice/transcribe/", {
+    method: "POST",
+    headers: { "X-CSRFToken": getCsrfToken() },
+    credentials: "same-origin",
+    body: formData,
+  });
+  const data = await res.json();
+  if (!res.ok || !data.success) throw new Error(data.error || "Transcription serveur impossible.");
+  return String(data.transcript || "").trim();
+}
+
+async function startVoice() {
   window._finalTranscript = "";
+  if (!isSecureVoiceContext()) {
+    showToast("Reconnaissance vocale bloquée: utilisez HTTPS ou http://localhost.", "error");
+    return;
+  }
+
+  const hasMicAccess = await ensureMicrophoneAccess();
+  if (!hasMicAccess) return;
+
+  activeMode = shouldUseServerTranscription() ? "server" : "browser";
   isListening = true;
   setVoiceState("listening");
   showVoiceFeedback();
+
   const box = document.getElementById("transcript-box");
   if (box) {
     box.textContent = "Parlez maintenant...";
     box.style.color = "#94A3B8";
     box.style.fontStyle = "italic";
   }
-  recognition.start();
+
+  if (activeMode === "server") {
+    try {
+      const mimeType = getPreferredMimeType();
+      mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = mimeType ? new MediaRecorder(mediaStream, { mimeType }) : new MediaRecorder(mediaStream);
+      recordedChunks = [];
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) recordedChunks.push(event.data);
+      };
+      mediaRecorder.onstop = async () => {
+        try {
+          setVoiceState("processing");
+          const blobType = mediaRecorder?.mimeType || mimeType || "audio/webm";
+          const audioBlob = new Blob(recordedChunks, { type: blobType });
+          const transcript = await transcribeServerAudio(audioBlob);
+          if (!transcript) throw new Error("Aucune transcription détectée.");
+          if (box) {
+            box.textContent = transcript;
+            box.style.color = "#E2E8F0";
+            box.style.fontStyle = "normal";
+          }
+          await extractFromTranscript(transcript);
+        } catch (err) {
+          setVoiceState("idle");
+          hideVoiceFeedback();
+          showToast(`Erreur : ${err.message}`, "error");
+        } finally {
+          stopMediaTracks();
+        }
+      };
+      mediaRecorder.start();
+      if (box) box.textContent = "Enregistrement en cours... Cliquez à nouveau pour arrêter.";
+      voiceDebug("MediaRecorder.start", { mimeType: mediaRecorder.mimeType || mimeType });
+      return;
+    } catch (err) {
+      isListening = false;
+      setVoiceState("idle");
+      hideVoiceFeedback();
+      stopMediaTracks();
+      showToast("Impossible de démarrer l'enregistrement audio.", "error");
+      return;
+    }
+  }
+
+  try {
+    recognition.start();
+  } catch (_) {
+    isListening = false;
+    setVoiceState("idle");
+    hideVoiceFeedback();
+    showToast("Impossible de démarrer la reconnaissance vocale.", "error");
+  }
 }
 
 function stopVoice() {
   isListening = false;
-  recognition.stop();
+  if (activeMode === "server" && mediaRecorder && mediaRecorder.state !== "inactive") {
+    mediaRecorder.stop();
+    return;
+  }
+  recognition?.stop();
 }
 
 function toggleVoice() {
-  if (!recognition) {
-    showToast("Reconnaissance vocale non supportée sur ce navigateur.", "error");
-    return;
-  }
   if (isListening) stopVoice();
   else startVoice();
 }
@@ -166,59 +291,63 @@ function initVoice() {
   if (!voiceBtn) return;
 
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
+  if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = document.documentElement.lang === "en" ? "en-US" : "fr-FR";
+
+    recognition.onresult = (event) => {
+      let interim = "";
+      let finalText = "";
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const part = event.results[i][0].transcript;
+        if (event.results[i].isFinal) finalText += part;
+        else interim += part;
+      }
+      const box = document.getElementById("transcript-box");
+      if (box) {
+        box.textContent = finalText || interim || "Parlez maintenant...";
+        box.style.color = finalText ? "#E2E8F0" : "#94A3B8";
+        box.style.fontStyle = finalText ? "normal" : "italic";
+      }
+      if (finalText) window._finalTranscript = finalText.trim();
+    };
+
+    recognition.onend = () => {
+      isListening = false;
+      const finalText = String(window._finalTranscript || "").trim();
+      if (finalText) {
+        extractFromTranscript(finalText);
+        window._finalTranscript = "";
+        return;
+      }
+      setVoiceState("idle");
+      hideVoiceFeedback();
+      showToast("Aucune voix détectée. Réessayez.", "error");
+    };
+
+    recognition.onerror = () => {
+      isListening = false;
+      setVoiceState("idle");
+      hideVoiceFeedback();
+      showToast("Service vocal navigateur indisponible. Utilisation du mode serveur recommandée.", "error");
+    };
+  }
+
+  if (!SpeechRecognition && !window.MediaRecorder) {
     voiceBtn.style.display = "none";
     return;
   }
 
   voiceBtn.addEventListener("click", toggleVoice);
-  recognition = new SpeechRecognition();
-  recognition.continuous = false;
-  recognition.interimResults = true;
-  recognition.lang = document.documentElement.lang === "en" ? "en-US" : "fr-FR";
-
-  recognition.onresult = (event) => {
-    let interim = "";
-    let finalText = "";
-    for (let i = event.resultIndex; i < event.results.length; i += 1) {
-      const part = event.results[i][0].transcript;
-      if (event.results[i].isFinal) finalText += part;
-      else interim += part;
-    }
-    const box = document.getElementById("transcript-box");
-    if (box) {
-      box.textContent = finalText || interim || "Parlez maintenant...";
-      box.style.color = finalText ? "#E2E8F0" : "#94A3B8";
-      box.style.fontStyle = finalText ? "normal" : "italic";
-    }
-    if (finalText) window._finalTranscript = finalText.trim();
-  };
-
-  recognition.onend = () => {
-    isListening = false;
-    const finalText = String(window._finalTranscript || "").trim();
-    if (finalText) {
-      extractFromTranscript(finalText);
-      window._finalTranscript = "";
-      return;
-    }
-    setVoiceState("idle");
-    hideVoiceFeedback();
-    showToast("Aucune voix détectée. Réessayez.", "error");
-  };
-
-  recognition.onerror = (event) => {
-    isListening = false;
-    setVoiceState("idle");
-    hideVoiceFeedback();
-    const errors = {
-      "not-allowed": "Microphone refusé. Autorisez l'accès.",
-      "no-speech": "Aucune voix détectée.",
-      network: "Erreur réseau.",
-      "audio-capture": "Microphone introuvable.",
-    };
-    showToast(errors[event.error] || "Erreur microphone.", "error");
-  };
+  voiceDebug("init", {
+    speechRecognition: Boolean(SpeechRecognition),
+    mediaRecorder: Boolean(window.MediaRecorder),
+    serverFallback: shouldUseServerTranscription(),
+    secure: isSecureVoiceContext(),
+    ua: navigator.userAgent,
+  });
 }
 
 document.addEventListener("DOMContentLoaded", initVoice);
