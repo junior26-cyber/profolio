@@ -1099,7 +1099,16 @@ def cv_templates(request: HttpRequest):
 def cv_create_page(request: HttpRequest):
     template_id = request.GET.get("template", "classique")
     selected_model = _preview_model_by_id(template_id)
-    return _render_page(request, "cv_create.html", {"selected_template": selected_model, "templates_list": CV_PREVIEW_MODELS})
+    return _render_page(
+        request,
+        "cv_create.html",
+        {
+            "selected_template": selected_model,
+            "templates_list": CV_PREVIEW_MODELS,
+            "models_gallery": CV_PREVIEW_MODELS,
+            "selected_model_id": selected_model.get("id", "classique"),
+        },
+    )
 
 
 @login_required(login_url="/login/")
