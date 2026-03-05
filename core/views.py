@@ -25,6 +25,7 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 from ai.client import GeminiConfigurationError
 from ai.client import generate as gemini_generate
 from ai.generator import generate_cover_letter, generate_cv_content
+from ai.voice import extract_cv_from_voice, extract_letter_from_voice
 from core.models import Letter, Resume, UserProfile
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -1517,6 +1518,29 @@ def extract_linkedin_profile(request: HttpRequest):
         return JsonResponse({"success": False, "detail": "Échec de récupération du profil LinkedIn."}, status=500)
 
     return JsonResponse({"success": True, "data": normalized})
+
+
+@login_required(login_url="/login/")
+@require_POST
+def voice_extract_api(request: HttpRequest):
+    payload = _safe_json_body(request)
+    transcript = str(payload.get("transcript", "")).strip()
+    mode = str(payload.get("mode", "cv")).strip().lower()
+    lang = str(payload.get("lang", "fr")).strip().lower()
+    if lang not in {"fr", "en"}:
+        lang = "fr"
+
+    if not transcript:
+        return JsonResponse({"success": False, "error": "Transcription vide."}, status=400)
+
+    try:
+        if mode == "letter":
+            fields = extract_letter_from_voice(transcript, lang)
+        else:
+            fields = extract_cv_from_voice(transcript, lang)
+        return JsonResponse({"success": True, "fields": fields})
+    except Exception as exc:
+        return JsonResponse({"success": False, "error": str(exc)}, status=500)
 
 
 @login_required(login_url="/login/")

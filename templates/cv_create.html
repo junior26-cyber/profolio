@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="/static/css/cv_builder.css" />
   <link rel="stylesheet" href="/static/css/cv_models.css?v=20260225" />
 </head>
-<body>
+<body data-page="cv">
 {% from "models/cv_previews.html" import cv_preview %}
 <div class="builder-page">
   <header class="builder-topbar">
@@ -33,21 +33,30 @@
           <i data-lucide="upload"></i>
           <span>Télécharger un CV existant</span>
         </button>
-        <div class="import-card" style="display:grid;gap:8px;align-items:stretch;">
-          <div style="display:flex;align-items:center;gap:10px;">
+        <button class="import-card voice-card" type="button" id="voice-btn">
+          <i data-lucide="mic" id="voice-icon" class="voice-icon"></i>
+          <span class="voice-label" id="voice-label">Parler</span>
+        </button>
+        <button class="import-card" type="button" id="linkedinCardBtn">
+          <div style="display:flex;align-items:center;gap:10px;justify-content:center;">
             <span class="linkedin-icon">in</span>
-            <span>Importer votre profil LinkedIn (URL)</span>
+            <span>Importer profil LinkedIn</span>
           </div>
-          <input
-            id="linkedinUrlInput"
-            class="builder-input plain"
-            type="url"
-            placeholder="https://www.linkedin.com/in/votre-profil/"
-            autocomplete="url"
-          />
-          <button class="btn-ghost-small" type="button" id="importLinkedinBtn">Importer depuis URL</button>
-        </div>
+        </button>
         <input id="uploadCvInput" type="file" accept=".txt,.md,.json,.pdf,.docx" hidden />
+      </div>
+      <div class="linkedin-import-row">
+        <input
+          id="linkedinUrlInput"
+          class="builder-input plain"
+          type="url"
+          placeholder="https://www.linkedin.com/in/votre-profil/"
+          autocomplete="url"
+        />
+        <button class="btn-ghost-small" type="button" id="importLinkedinBtn">Importer depuis URL</button>
+      </div>
+      <div id="voice-feedback" class="voice-feedback">
+        <div id="transcript-box" class="transcript-box">Parlez maintenant...</div>
       </div>
 
       <div class="form-section">
@@ -231,6 +240,7 @@
 </div>
 
 <script src="https://unpkg.com/lucide@latest"></script>
+<script src="/static/js/voice.js?v=20260304"></script>
 <script src="/static/js/builder.js?v=20260226"></script>
 </body>
 </html>

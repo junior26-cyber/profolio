@@ -7,6 +7,9 @@ document.addEventListener("DOMContentLoaded", function () {
     if (csrfToken) headers["X-CSRFToken"] = csrfToken;
     return { ...init, headers, credentials: "same-origin" };
   }
+  function showToast(message) {
+    alert(message);
+  }
 
   async function readJsonResponse(res) {
     const raw = await res.text();
@@ -67,6 +70,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const uploadCvInput = document.getElementById("uploadCvInput");
   const importLinkedinBtn = document.getElementById("importLinkedinBtn");
   const linkedinUrlInput = document.getElementById("linkedinUrlInput");
+  const linkedinCardBtn = document.getElementById("linkedinCardBtn");
 
   const skillsZone = document.getElementById("skills-zone");
   const skillsInput = document.getElementById("skills-input");
@@ -561,6 +565,13 @@ document.addEventListener("DOMContentLoaded", function () {
     if (uploadCvInput) uploadCvInput.value = "";
   });
   importLinkedinBtn?.addEventListener("click", handleLinkedinImport);
+  linkedinCardBtn?.addEventListener("click", () => {
+    if ((linkedinUrlInput?.value || "").trim()) {
+      handleLinkedinImport();
+      return;
+    }
+    linkedinUrlInput?.focus();
+  });
   linkedinUrlInput?.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
       event.preventDefault();
@@ -569,4 +580,13 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   schedulePreviewUpdate();
+
+  window.profolioVoiceBridge = {
+    addTag(value) {
+      const text = String(value || "").trim();
+      if (text) skillsManager.add(text);
+    },
+    schedulePreviewUpdate,
+    showToast,
+  };
 });

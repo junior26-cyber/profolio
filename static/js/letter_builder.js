@@ -6,6 +6,9 @@ document.addEventListener("DOMContentLoaded", function () {
     if (csrfToken) headers["X-CSRFToken"] = csrfToken;
     return { ...init, headers, credentials: "same-origin" };
   }
+  function showToast(message) {
+    alert(message);
+  }
 
   // Letter flow is French-first for now.
   const appLang = "fr";
@@ -48,6 +51,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const previewFrame = document.getElementById("letter-preview-frame");
   const previewEmpty = document.getElementById("preview-empty");
+  const uploadCvBtn = document.getElementById("uploadCvBtn");
+  const uploadCvInput = document.getElementById("uploadCvInput");
+  const importLinkedinBtn = document.getElementById("importLinkedinBtn");
+  const linkedinUrlInput = document.getElementById("linkedinUrlInput");
+  const linkedinCardBtn = document.getElementById("linkedinCardBtn");
   let previewTimer;
 
   function collectData() {
@@ -299,5 +307,101 @@ document.addEventListener("DOMContentLoaded", function () {
     editZone?.classList.remove("hidden");
     if (wordCount) wordCount.textContent = `${countWords(textarea.value)} mots`;
   }
+
+  async function extractFromFile(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("mode", "cv");
+    const res = await fetch("/api/ai/extract-cv-basics/", {
+      ...withCsrf({
+        method: "POST",
+        body: formData,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.detail || data.error || "Extraction impossible");
+    return data.data || {};
+  }
+
+  async function extractFromLinkedinUrl(linkedinUrl) {
+    const res = await fetch("/api/ai/extract-linkedin/", {
+      ...withCsrf({
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ linkedin_url: linkedinUrl, lang: appLang }),
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.detail || data.error || "Import LinkedIn impossible");
+    return data.data || {};
+  }
+
+  function populateFromExtract(data) {
+    if (data.position) {
+      const positionInput = document.getElementById("position");
+      if (positionInput) positionInput.value = data.position;
+    } else if (data.job_title) {
+      const positionInput = document.getElementById("position");
+      if (positionInput) positionInput.value = data.job_title;
+    }
+    const companyInput = document.getElementById("company");
+    if (companyInput && data.company) companyInput.value = data.company;
+    schedulePreviewUpdate();
+  }
+
+  uploadCvBtn?.addEventListener("click", () => uploadCvInput?.click());
+  uploadCvInput?.addEventListener("change", async () => {
+    const file = uploadCvInput.files?.[0];
+    if (!file) return;
+    try {
+      const data = await extractFromFile(file);
+      populateFromExtract(data);
+      showToast("Informations importées.");
+    } catch (error) {
+      showToast(`Import impossible: ${error.message}`);
+    } finally {
+      uploadCvInput.value = "";
+    }
+  });
+  importLinkedinBtn?.addEventListener("click", async () => {
+    const url = (linkedinUrlInput?.value || "").trim();
+    if (!url) {
+      showToast("Ajoutez l'URL de votre profil LinkedIn.");
+      return;
+    }
+    try {
+      const data = await extractFromLinkedinUrl(url);
+      populateFromExtract(data);
+      showToast("Profil LinkedIn importé.");
+    } catch (error) {
+      showToast(`Import impossible: ${error.message}`);
+    }
+  });
+  linkedinCardBtn?.addEventListener("click", () => {
+    if ((linkedinUrlInput?.value || "").trim()) {
+      importLinkedinBtn?.click();
+      return;
+    }
+    linkedinUrlInput?.focus();
+  });
+  linkedinUrlInput?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      importLinkedinBtn?.click();
+    }
+  });
+
+  window.profolioVoiceBridge = {
+    setTone(tone) {
+      currentTone = tone;
+      document.querySelectorAll(".tone-card").forEach((card) => {
+        card.classList.toggle("active", card.getAttribute("data-tone") === tone);
+      });
+      schedulePreviewUpdate();
+    },
+    schedulePreviewUpdate,
+    showToast,
+  };
+
   schedulePreviewUpdate();
 });

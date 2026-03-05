@@ -30,6 +30,7 @@ urlpatterns = [
     path("api/cv/<int:cv_id>/update/", views.update_cv_build, name="update_cv_build"),
     path("api/ai/extract-cv-basics/", views.extract_cv_basics, name="extract_cv_basics"),
     path("api/ai/extract-linkedin/", views.extract_linkedin_profile, name="extract_linkedin_profile"),
+    path("api/voice/extract/", views.voice_extract_api, name="voice_extract_api"),
     path("api/letters/preview/", views.letter_preview_api, name="letter_preview_api"),
     path("api/letters/generate/", views.generate_letter_api, name="generate_letter_api"),
     path("api/letters/save/", views.save_letter_draft, name="save_letter_draft"),

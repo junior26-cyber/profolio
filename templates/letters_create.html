@@ -7,7 +7,7 @@
   <title>Créer Lettre | ProFolio</title>
   <link rel="stylesheet" href="/static/css/letter_builder.css" />
 </head>
-<body>
+<body data-page="letter">
 <div class="letter-page">
   <header class="letter-topbar">
     <div class="top-left">
@@ -32,6 +32,36 @@
       <div class="form-wrap">
         <h2>Informations de la lettre</h2>
         <p>3 informations suffisent — Gemini rédige tout le reste</p>
+        <div class="import-cards">
+          <button class="import-card" type="button" id="uploadCvBtn">
+            <i data-lucide="upload"></i>
+            <span>Télécharger un CV existant</span>
+          </button>
+          <button class="import-card voice-card" type="button" id="voice-btn">
+            <i data-lucide="mic" id="voice-icon" class="voice-icon"></i>
+            <span class="voice-label" id="voice-label">Parler</span>
+          </button>
+          <button class="import-card" type="button" id="linkedinCardBtn">
+            <div style="display:flex;align-items:center;gap:10px;justify-content:center;">
+              <span class="linkedin-icon">in</span>
+              <span>Importer profil LinkedIn</span>
+            </div>
+          </button>
+          <input id="uploadCvInput" type="file" accept=".txt,.md,.json,.pdf,.docx" hidden />
+        </div>
+        <div class="linkedin-import-row">
+          <input
+            id="linkedinUrlInput"
+            class="letter-input plain"
+            type="url"
+            placeholder="https://www.linkedin.com/in/votre-profil/"
+            autocomplete="url"
+          />
+          <button class="btn-ghost-small" type="button" id="importLinkedinBtn">Importer depuis URL</button>
+        </div>
+        <div id="voice-feedback" class="voice-feedback">
+          <div id="transcript-box" class="transcript-box">Parlez maintenant...</div>
+        </div>
 
         <input type="hidden" id="selectedTemplate" value="elite" />
         <input type="hidden" id="currentLetterId" value="{{ letter_draft.id if letter_draft else '' }}" />
@@ -149,6 +179,7 @@
 </div>
 
 <script src="https://unpkg.com/lucide@latest"></script>
+<script src="/static/js/voice.js?v=20260304"></script>
 <script src="/static/js/letter_builder.js"></script>
 </body>
 </html>
