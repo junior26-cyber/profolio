@@ -39,6 +39,18 @@
           <input id="edit-full-name" class="builder-input plain" type="text" />
         </div>
         <div class="form-group">
+          <label class="form-label">Photo *</label>
+          <div class="photo-upload-row">
+            <label class="photo-upload-btn" for="edit-photo-input">
+              <i data-lucide="camera"></i>
+              <span>Importer une photo</span>
+            </label>
+            <input id="edit-photo-input" type="file" accept="image/*" hidden />
+            <button type="button" id="edit-photo-remove-btn" class="photo-remove-btn hidden">Supprimer</button>
+          </div>
+          <p class="tiny-label">PNG, JPG, WEBP (max 5MB)</p>
+        </div>
+        <div class="form-group">
           <label class="form-label">Poste visé</label>
           <input id="edit-job-title" class="builder-input plain" type="text" />
         </div>
@@ -156,6 +168,6 @@
 <script id="cvEditorData" type="application/json">{{ editor_data|tojson }}</script>
 <script id="cvTemplateData" type="application/json">{{ selected_model_id|tojson }}</script>
 <script src="https://unpkg.com/lucide@latest"></script>
-<script src="/static/js/build.js?v=20260226"></script>
+<script src="/static/js/build.js?v=20260306a"></script>
 </body>
 </html>

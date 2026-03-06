@@ -84,6 +84,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const summary = document.getElementById("edit-summary");
   const interests = document.getElementById("edit-interests");
   const qualities = document.getElementById("edit-qualities");
+  const photoInput = document.getElementById("edit-photo-input");
+  const photoRemoveBtn = document.getElementById("edit-photo-remove-btn");
 
   const experiencesList = document.getElementById("experiencesList");
   const educationList = document.getElementById("educationList");
@@ -103,6 +105,7 @@ document.addEventListener("DOMContentLoaded", function () {
     summary.value = state.summary || "";
     interests.value = Array.isArray(state.interests) ? state.interests.join(", ") : "";
     qualities.value = Array.isArray(state.qualities) ? state.qualities.join(", ") : "";
+    photoRemoveBtn?.classList.toggle("hidden", !state.personal_info?.photo_data_url);
   }
 
   function rowActionsHTML(type, idx) {
@@ -237,6 +240,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
   async function saveCv() {
     collectPrimitiveInputs();
+    if (!state.personal_info?.photo_data_url) {
+      throw new Error("La photo est obligatoire.");
+    }
     const res = await fetch(`/api/cv/${cvId}/update/`, {
       ...withCsrf({
         method: "POST",
@@ -287,6 +293,37 @@ document.addEventListener("DOMContentLoaded", function () {
         renderCollections();
         schedulePreview();
       }
+    });
+  }
+
+  function bindPhotoEvents() {
+    photoInput?.addEventListener("change", function () {
+      const file = photoInput.files?.[0];
+      if (!file) return;
+      if (!file.type.startsWith("image/")) {
+        alert("Veuillez sélectionner une image valide.");
+        photoInput.value = "";
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        alert("La photo dépasse 5MB.");
+        photoInput.value = "";
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function () {
+        state.personal_info.photo_data_url = String(reader.result || "");
+        photoRemoveBtn?.classList.remove("hidden");
+        schedulePreview();
+      };
+      reader.readAsDataURL(file);
+    });
+
+    photoRemoveBtn?.addEventListener("click", function () {
+      state.personal_info.photo_data_url = "";
+      if (photoInput) photoInput.value = "";
+      photoRemoveBtn?.classList.add("hidden");
+      schedulePreview();
     });
   }
 
@@ -433,6 +470,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   bindRootEvents();
+  bindPhotoEvents();
   setPrimitiveInputs();
   renderCollections();
   updatePreview();

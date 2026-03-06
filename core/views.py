@@ -1238,12 +1238,15 @@ def generate_cv_from_ai(request: HttpRequest):
         full_name = str(payload.get("full_name", "")).strip()
         job_title = str(payload.get("job_title", "")).strip()
         cv_prompt = str(payload.get("cv_prompt", "")).strip()
+        photo_data_url = str(payload.get("photo_data_url", "")).strip()
         skills = payload.get("skills", []) if isinstance(payload.get("skills"), list) else []
         interests = payload.get("interests", []) if isinstance(payload.get("interests"), list) else []
         lang = str(payload.get("lang", "fr")).lower()
         template_id = _resolve_cv_template_id(str(payload.get("template", "classique")))
         if not full_name or not job_title or not cv_prompt or not skills or not interests:
             return JsonResponse({"success": False, "detail": "Champs obligatoires manquants."}, status=400)
+        if not photo_data_url.startswith(("data:image/", "/static/")):
+            return JsonResponse({"success": False, "detail": "La photo est obligatoire pour générer un CV."}, status=400)
 
         gen_input = {
             "name": full_name,
@@ -1280,7 +1283,7 @@ def generate_cv_from_ai(request: HttpRequest):
                     "phone": str(payload.get("phone", "")).strip(),
                     "linkedin": str(payload.get("linkedin", "")).strip(),
                     "github": str(payload.get("github", "")).strip(),
-                    "photo_data_url": str(payload.get("photo_data_url", "")).strip(),
+                    "photo_data_url": photo_data_url,
                 },
             },
         )
@@ -1675,6 +1678,9 @@ def update_cv_build(request: HttpRequest, cv_id: int):
     context = _cv_editor_payload_to_context(payload.get("cv", {}) if isinstance(payload.get("cv"), dict) else {})
     editor = _cv_context_to_editor_data(context)
     personal = context.get("personal_info", {})
+    photo_data_url = str(personal.get("photo_data_url", "")).strip()
+    if not photo_data_url.startswith(("data:image/", "/static/")):
+        return JsonResponse({"success": False, "detail": "La photo est obligatoire."}, status=400)
 
     resume.template = {"id": template_id, "name": _preview_model_by_id(template_id).get("name", "Classique"), "color": _template_color_for_create(template_id)}
     resume.input_data = {
@@ -1690,7 +1696,7 @@ def update_cv_build(request: HttpRequest, cv_id: int):
         "linkedin": personal.get("linkedin", ""),
         "github": personal.get("github", ""),
         "interests": editor.get("interests", []),
-        "photo_data_url": personal.get("photo_data_url", ""),
+        "photo_data_url": photo_data_url,
     }
     resume.generated_data = {
         "summary": editor.get("summary", ""),

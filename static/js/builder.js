@@ -271,6 +271,10 @@ document.addEventListener("DOMContentLoaded", function () {
       alert("Veuillez remplir les 5 champs obligatoires.");
       return;
     }
+    if (!data.photo_data_url) {
+      alert("La photo est obligatoire pour générer le CV.");
+      return;
+    }
     if (skillsTags.length === 0) {
       alert("Ajoutez au moins une compétence.");
       return;
