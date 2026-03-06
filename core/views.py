@@ -1025,6 +1025,41 @@ def activate_user_account(request: HttpRequest, user_id: int):
     return redirect("/admin/panel/")
 
 
+@login_required(login_url="/login/")
+@require_GET
+def admin_users_page(request: HttpRequest):
+    if not (request.user.is_staff or request.user.is_superuser):
+        return redirect("/dashboard/")
+    users = User.objects.select_related("profile").order_by("-date_joined")
+    return _render_page(request, "admin_users.html", {"users_list": users, "current_admin_id": request.user.id})
+
+
+@login_required(login_url="/login/")
+@require_POST
+def admin_toggle_user_block(request: HttpRequest, user_id: int):
+    if not (request.user.is_staff or request.user.is_superuser):
+        return redirect("/dashboard/")
+    target = get_object_or_404(User.objects.select_related("profile"), id=user_id)
+    if target.id == request.user.id:
+        return redirect("/admin/users/")
+    profile = getattr(target, "profile", None)
+    if profile:
+        profile.is_approved = not bool(profile.is_approved)
+        profile.save(update_fields=["is_approved"])
+    return redirect("/admin/users/")
+
+
+@login_required(login_url="/login/")
+@require_POST
+def admin_delete_user(request: HttpRequest, user_id: int):
+    if not (request.user.is_staff or request.user.is_superuser):
+        return redirect("/dashboard/")
+    target = get_object_or_404(User, id=user_id)
+    if target.id != request.user.id:
+        target.delete()
+    return redirect("/admin/users/")
+
+
 @require_http_methods(["GET", "POST"])
 @ensure_csrf_cookie
 def login_page(request: HttpRequest):

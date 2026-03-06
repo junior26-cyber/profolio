@@ -99,6 +99,14 @@ h1 {
   border: 1px solid var(--line);
   background: rgba(9, 15, 24, 0.6);
 }
+.btn-danger {
+  text-decoration: none;
+  color: #ffd3d0;
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 126, 102, 0.4);
+  background: rgba(70, 18, 18, 0.55);
+}
 
 .kpis-grid,
 .charts-grid,
@@ -123,6 +131,14 @@ h1 {
   padding: 16px;
   position: relative;
   overflow: hidden;
+}
+.kpi-clickable {
+  cursor: pointer;
+  transition: transform .2s ease, border-color .2s ease;
+}
+.kpi-clickable:hover {
+  transform: translateY(-2px);
+  border-color: rgba(99, 208, 255, 0.5);
 }
 
 .kpi-card::after {

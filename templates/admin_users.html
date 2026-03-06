@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Utilisateurs | Admin ProFolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/admin_panel.css?v=20260306" />
+</head>
+<body>
+  <div class="admin-bg"></div>
+  <main class="admin-shell">
+    <header class="admin-head">
+      <div>
+        <p class="eyebrow">ProFolio Control</p>
+        <h1>Gestion des utilisateurs</h1>
+        <p class="subtitle">Bloquer, débloquer ou supprimer des comptes.</p>
+      </div>
+      <div class="head-actions">
+        <a href="/admin/panel/" class="btn-back">Retour Admin</a>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h3>Liste des utilisateurs</h3>
+      </div>
+      <div class="table-list">
+        {% for u in users_list %}
+          <div class="row-item">
+            <div>
+              <p class="row-title">{{ u.username }}{% if u.id == current_admin_id %} (vous){% endif %}</p>
+              <p class="row-sub">{{ u.email }} · Inscrit le {{ u.date_joined.strftime('%d/%m/%Y %H:%M') }}</p>
+              <p class="row-sub">
+                Statut:
+                {% if u.profile and u.profile.is_approved %}
+                  Actif
+                {% else %}
+                  Bloqué / En attente
+                {% endif %}
+              </p>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              {% if u.id != current_admin_id %}
+                <form method="post" action="/admin/users/{{ u.id }}/toggle-block/">
+                  <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}" />
+                  <button type="submit" class="btn-back">
+                    {% if u.profile and u.profile.is_approved %}Bloquer{% else %}Débloquer{% endif %}
+                  </button>
+                </form>
+                <form method="post" action="/admin/users/{{ u.id }}/delete/" onsubmit="return confirm('Supprimer cet utilisateur ?');">
+                  <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}" />
+                  <button type="submit" class="btn-danger">Supprimer</button>
+                </form>
+              {% endif %}
+            </div>
+          </div>
+        {% else %}
+          <p class="empty">Aucun utilisateur trouvé.</p>
+        {% endfor %}
+      </div>
+    </section>
+  </main>
+</body>
+</html>

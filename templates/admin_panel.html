@@ -25,7 +25,7 @@
     </header>
 
     <section class="kpis-grid reveal">
-      <article class="kpi-card">
+      <article class="kpi-card kpi-clickable" onclick="window.location.href='/admin/users/'" role="button" tabindex="0" aria-label="Voir les utilisateurs">
         <p class="kpi-label">Utilisateurs</p>
         <h2 class="kpi-value" data-count="{{ total_users }}">0</h2>
         <p class="kpi-meta">+{{ users_30d }} sur 30 jours</p>
