@@ -346,6 +346,22 @@ def _cv_template_context_from_saved(cv_data: dict) -> dict:
 
     interests = _safe_list(optional.get("interests") or personal.get("interests"))
     interests = [str(item).strip() for item in interests if str(item).strip()]
+    custom_fields = []
+    for item in personal.get("custom_fields", []) if isinstance(personal.get("custom_fields"), list) else []:
+        if not isinstance(item, dict):
+            continue
+        key = str(item.get("key", "")).strip() or str(item.get("label", "")).strip().lower().replace(" ", "_")
+        value = str(item.get("value", "")).strip()
+        label = str(item.get("label", "")).strip() or key.replace("_", " ").title()
+        if key and value:
+            custom_fields.append({"key": key, "label": label, "value": value})
+    standard = {"name", "job_title", "email", "phone", "address", "city", "linkedin", "github", "photo_data_url", "custom_fields"}
+    for key, value in personal.items():
+        if key in standard:
+            continue
+        text = str(value).strip()
+        if text:
+            custom_fields.append({"key": key, "label": key.replace("_", " ").title(), "value": text})
 
     if not experiences:
         experiences = [{"title": "Expérience", "company": "", "location": "", "start_date": "", "end_date": "", "is_current": False, "description": "", "order": 0}]
@@ -367,6 +383,7 @@ def _cv_template_context_from_saved(cv_data: dict) -> dict:
             "linkedin": str(personal.get("linkedin", "")).strip() or str(optional.get("linkedin", "")).strip(),
             "github": str(personal.get("github", "")).strip() or str(optional.get("github", "")).strip(),
             "photo_data_url": str(optional.get("photo_data_url", "")).strip() or str(personal.get("photo_data_url", "")).strip(),
+            "custom_fields": custom_fields,
         },
         "summary": str(generated.get("summary", "")).strip() or "Résumé professionnel non renseigné.",
         "experiences": _wrap_as_django_like(experiences),
@@ -388,8 +405,16 @@ def _cv_context_to_editor_data(cv_context: dict) -> dict:
     interests = _safe_list(cv_context.get("interests"))
     qualities = _safe_list(cv_context.get("qualities"))
 
-    standard = {"name", "job_title", "email", "phone", "address", "city", "linkedin", "github", "photo_data_url"}
+    standard = {"name", "job_title", "email", "phone", "address", "city", "linkedin", "github", "photo_data_url", "custom_fields"}
     custom_fields = []
+    for item in personal.get("custom_fields", []) if isinstance(personal.get("custom_fields"), list) else []:
+        if not isinstance(item, dict):
+            continue
+        key = str(item.get("key", "")).strip() or str(item.get("label", "")).strip().lower().replace(" ", "_")
+        value = str(item.get("value", "")).strip()
+        label = str(item.get("label", "")).strip() or key.replace("_", " ").title()
+        if key and value:
+            custom_fields.append({"key": key, "label": label, "value": value})
     for key, value in personal.items():
         if key in standard:
             continue
@@ -437,6 +462,7 @@ def _cv_editor_payload_to_context(data: dict) -> dict:
         "linkedin": str(personal.get("linkedin", "")).strip(),
         "github": str(personal.get("github", "")).strip(),
         "photo_data_url": photo_data_url,
+        "custom_fields": [],
     }
 
     custom_fields = personal.get("custom_fields", []) if isinstance(personal.get("custom_fields"), list) else []
@@ -447,6 +473,13 @@ def _cv_editor_payload_to_context(data: dict) -> dict:
         value = str(item.get("value", "")).strip()
         if value:
             personal_output[key] = value
+            personal_output["custom_fields"].append(
+                {
+                    "key": key,
+                    "label": str(item.get("label", "")).strip() or key.replace("_", " ").title(),
+                    "value": value,
+                }
+            )
 
     experiences = []
     for idx, exp in enumerate(data.get("experiences", []) if isinstance(data.get("experiences"), list) else []):

@@ -42,6 +42,7 @@
 {% set experiences = cv.experiences.all if cv.experiences is defined and cv.experiences.all is defined else (cv.experiences if cv.experiences is defined else []) %}
 {% set education = cv.education.all if cv.education is defined and cv.education.all is defined else (cv.education if cv.education is defined else []) %}
 {% set skills = cv.skills.all if cv.skills is defined and cv.skills.all is defined else (cv.skills if cv.skills is defined else []) %}
+{% set custom_fields = p.custom_fields if p.custom_fields is defined else [] %}
 {% set photo_url = cv.photo.url if cv.photo is defined and cv.photo and cv.photo.url is defined else (p.photo_data_url if p.photo_data_url is defined else '') %}
 <div class="sheet">
   <header class="hero">
@@ -69,6 +70,9 @@
       <p>✆ {{ p.phone }}</p>
       <p>⌂ {{ p.address }}</p>
       <p>✉ {{ p.email }}</p>
+      {% if p.linkedin %}<p>in {{ p.linkedin }}</p>{% endif %}
+      {% if p.github %}<p>gh {{ p.github }}</p>{% endif %}
+      {% for cf in custom_fields if cf.value %}<p>{{ cf.label }}: {{ cf.value }}</p>{% endfor %}
       <h3 style="margin-top:18px;">Compétences</h3>
       <ul>{% for skill in skills|sort(attribute='order') %}<li>{{ skill.name }}</li>{% endfor %}</ul>
     </aside>

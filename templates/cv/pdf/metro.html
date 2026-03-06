@@ -42,6 +42,7 @@
 {% set skills = cv.skills.all if cv.skills is defined and cv.skills.all is defined else (cv.skills if cv.skills is defined else []) %}
 {% set languages = cv.languages.all if cv.languages is defined and cv.languages.all is defined else (cv.languages if cv.languages is defined else []) %}
 {% set interests = cv.interests.all if cv.interests is defined and cv.interests.all is defined else (cv.interests if cv.interests is defined else []) %}
+{% set custom_fields = p.custom_fields if p.custom_fields is defined else [] %}
 {% set photo_url = cv.photo.url if cv.photo is defined and cv.photo and cv.photo.url is defined else (p.photo_data_url if p.photo_data_url is defined else '') %}
 <div class="sheet">
   <div class="topbar"></div>
@@ -50,7 +51,7 @@
       <div class="photo">{% if photo_url %}<img src="{{ photo_url }}" alt="Photo">{% else %}<div class="photo-fallback">PHOTO</div>{% endif %}</div>
       <div><h1 class="name">{{ p.name }}</h1><p class="job">{{ p.job_title }}</p></div>
     </div>
-    <div class="contact"><p>⌂ {{ p.city }}</p><p>✆ {{ p.phone }}</p><p>✉ {{ p.email }}</p></div>
+    <div class="contact"><p>⌂ {{ p.city }}</p><p>✆ {{ p.phone }}</p><p>✉ {{ p.email }}</p>{% if p.linkedin %}<p>in {{ p.linkedin }}</p>{% endif %}{% if p.github %}<p>gh {{ p.github }}</p>{% endif %}{% for cf in custom_fields if cf.value %}<p>{{ cf.label }}: {{ cf.value }}</p>{% endfor %}</div>
   </header>
 
   <div class="layout">

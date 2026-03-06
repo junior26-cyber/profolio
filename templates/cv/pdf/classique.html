@@ -37,6 +37,7 @@
 {% set education = cv.education.all if cv.education is defined and cv.education.all is defined else (cv.education if cv.education is defined else []) %}
 {% set languages = cv.languages.all if cv.languages is defined and cv.languages.all is defined else (cv.languages if cv.languages is defined else []) %}
 {% set interests = cv.interests.all if cv.interests is defined and cv.interests.all is defined else (cv.interests if cv.interests is defined else []) %}
+{% set custom_fields = p.custom_fields if p.custom_fields is defined else [] %}
 {% set photo_url = cv.photo.url if cv.photo is defined and cv.photo and cv.photo.url is defined else (p.photo_data_url if p.photo_data_url is defined else '') %}
 <div class="sheet">
   <div class="header-band">
@@ -44,7 +45,12 @@
     <div class="id-top">
       <div class="name">{{ p.name }}</div>
       <div class="job">{{ p.job_title }}</div>
-      <div class="meta">{{ p.city }}<br>{{ p.phone }}<br>{{ p.email }}</div>
+      <div class="meta">
+        {{ p.city }}<br>{{ p.phone }}<br>{{ p.email }}
+        {% if p.linkedin %}<br>{{ p.linkedin }}{% endif %}
+        {% if p.github %}<br>{{ p.github }}{% endif %}
+        {% for cf in custom_fields if cf.value %}<br>{{ cf.label }}: {{ cf.value }}{% endfor %}
+      </div>
     </div>
   </div>
 

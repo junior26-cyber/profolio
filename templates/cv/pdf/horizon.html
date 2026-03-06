@@ -42,6 +42,7 @@
 {% set skills = cv.skills.all if cv.skills is defined and cv.skills.all is defined else (cv.skills if cv.skills is defined else []) %}
 {% set languages = cv.languages.all if cv.languages is defined and cv.languages.all is defined else (cv.languages if cv.languages is defined else []) %}
 {% set interests = cv.interests.all if cv.interests is defined and cv.interests.all is defined else (cv.interests if cv.interests is defined else []) %}
+{% set custom_fields = p.custom_fields if p.custom_fields is defined else [] %}
 {% set photo_url = cv.photo.url if cv.photo is defined and cv.photo and cv.photo.url is defined else (p.photo_data_url if p.photo_data_url is defined else '') %}
 <div class="sheet">
   <div class="red-wave"></div>
@@ -49,7 +50,7 @@
   <div class="layout">
     <aside class="left">
       <div class="photo">{% if photo_url %}<img src="{{ photo_url }}" alt="Photo">{% else %}<div class="photo-fallback">PHOTO</div>{% endif %}</div>
-      <h3>Profil</h3><p>{{ p.address }}<br>{{ p.city }}<br>{{ p.email }}<br>{{ p.phone }}</p>
+      <h3>Profil</h3><p>{{ p.address }}<br>{{ p.city }}<br>{{ p.email }}<br>{{ p.phone }}{% if p.linkedin %}<br>{{ p.linkedin }}{% endif %}{% if p.github %}<br>{{ p.github }}{% endif %}{% for cf in custom_fields if cf.value %}<br>{{ cf.label }}: {{ cf.value }}{% endfor %}</p>
       <h3 style="margin-top:8px;">Compétences</h3><ul>{% for skill in skills|sort(attribute='order') %}<li>{{ skill.name }}</li>{% endfor %}</ul>
       <h3>Langues</h3><ul>{% for lang in languages %}<li>{{ lang.name }}</li>{% endfor %}</ul>
       <h3>Loisirs</h3><ul>{% for interest in interests %}<li>{{ interest }}</li>{% endfor %}</ul>

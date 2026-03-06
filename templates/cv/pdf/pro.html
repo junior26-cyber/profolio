@@ -38,11 +38,12 @@
 {% set skills = cv.skills.all if cv.skills is defined and cv.skills.all is defined else (cv.skills if cv.skills is defined else []) %}
 {% set qualities = cv.qualities.all if cv.qualities is defined and cv.qualities.all is defined else (cv.qualities if cv.qualities is defined else []) %}
 {% set languages = cv.languages.all if cv.languages is defined and cv.languages.all is defined else (cv.languages if cv.languages is defined else []) %}
+{% set custom_fields = p.custom_fields if p.custom_fields is defined else [] %}
 {% set photo_url = cv.photo.url if cv.photo is defined and cv.photo and cv.photo.url is defined else (p.photo_data_url if p.photo_data_url is defined else '') %}
 <div class="sheet">
   <aside class="left">
     <div class="photo">{% if photo_url %}<img src="{{ photo_url }}" alt="Photo">{% else %}<div class="photo-fallback">PHOTO</div>{% endif %}</div>
-    <div class="block"><h3>Contact</h3><ul><li>{{ p.phone }}</li><li>{{ p.email }}</li><li>{{ p.address }}</li><li>{{ p.city }}</li></ul></div>
+    <div class="block"><h3>Contact</h3><ul><li>{{ p.phone }}</li><li>{{ p.email }}</li><li>{{ p.address }}</li><li>{{ p.city }}</li>{% if p.linkedin %}<li>{{ p.linkedin }}</li>{% endif %}{% if p.github %}<li>{{ p.github }}</li>{% endif %}{% for cf in custom_fields if cf.value %}<li>{{ cf.label }}: {{ cf.value }}</li>{% endfor %}</ul></div>
     <div class="block"><h3>Compétences</h3><ul>{% for skill in skills|sort(attribute='order') %}<li>{{ skill.name }}</li>{% endfor %}</ul></div>
     <div class="block"><h3>Qualites</h3><ul>{% for quality in qualities %}<li>{{ quality }}</li>{% endfor %}</ul></div>
     <div class="block"><h3>Langues</h3><ul>{% for lang in languages %}<li>{{ lang.name }}{% if lang.level %} : {{ lang.level }}{% endif %}</li>{% endfor %}</ul></div>
