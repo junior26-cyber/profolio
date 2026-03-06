@@ -16,10 +16,12 @@ class AccountActivationMiddleware:
     def __call__(self, request):
         user = getattr(request, "user", None)
         path = request.path or "/"
+        profile = getattr(user, "profile", None) if user and getattr(user, "is_authenticated", False) else None
+        is_approved = bool(getattr(profile, "is_approved", True))
         if (
             user
             and user.is_authenticated
-            and not user.is_active
+            and not is_approved
             and not user.is_staff
             and not user.is_superuser
             and not any(path.startswith(prefix) for prefix in self.allowed_prefixes)

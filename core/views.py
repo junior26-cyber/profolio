@@ -109,6 +109,17 @@ def _safe_ai(callable_fn):
         raise ValueError("AI generation failed.") from exc
 
 
+def _is_user_approved(user) -> bool:
+    if not user or not user.is_authenticated:
+        return False
+    if user.is_staff or user.is_superuser:
+        return True
+    profile = getattr(user, "profile", None)
+    if profile is None:
+        return True
+    return bool(getattr(profile, "is_approved", True))
+
+
 def _preview_model_by_id(template_id: str) -> dict:
     for model in CV_PREVIEW_MODELS:
         if model["id"] == template_id:
@@ -943,7 +954,7 @@ def dashboard(request: HttpRequest):
 @login_required(login_url="/login/")
 @require_GET
 def inactive_account_page(request: HttpRequest):
-    if request.user.is_active or request.user.is_staff or request.user.is_superuser:
+    if _is_user_approved(request.user):
         return redirect("/cv/create/")
     return _render_page(request, "inactive_account.html", {"user": request.user})
 
@@ -996,7 +1007,7 @@ def admin_panel(request: HttpRequest):
         "top_templates": top_templates,
         "recent_resumes": Resume.objects.select_related("user").order_by("-created_at")[:6],
         "recent_letters": Letter.objects.select_related("user").order_by("-created_at")[:6],
-        "pending_users": User.objects.filter(is_active=False, is_staff=False, is_superuser=False).order_by("-date_joined")[:20],
+        "pending_users": User.objects.filter(profile__is_approved=False, is_staff=False, is_superuser=False).order_by("-date_joined")[:20],
     }
     return _render_page(request, "admin_panel.html", context)
 
@@ -1006,9 +1017,11 @@ def admin_panel(request: HttpRequest):
 def activate_user_account(request: HttpRequest, user_id: int):
     if not (request.user.is_staff or request.user.is_superuser):
         return redirect("/dashboard/")
-    target = get_object_or_404(User, id=user_id)
-    target.is_active = True
-    target.save(update_fields=["is_active"])
+    target = get_object_or_404(User.objects.select_related("profile"), id=user_id)
+    profile = getattr(target, "profile", None)
+    if profile:
+        profile.is_approved = True
+        profile.save(update_fields=["is_approved"])
     return redirect("/admin/panel/")
 
 
@@ -1016,7 +1029,7 @@ def activate_user_account(request: HttpRequest, user_id: int):
 @ensure_csrf_cookie
 def login_page(request: HttpRequest):
     if request.user.is_authenticated:
-        if request.user.is_active or request.user.is_staff or request.user.is_superuser:
+        if _is_user_approved(request.user):
             return redirect("/cv/create/")
         return redirect("/inactive-account/")
 
@@ -1027,7 +1040,7 @@ def login_page(request: HttpRequest):
         if not user or not user.check_password(password):
             return _render_page(request, "login.html", {"error": "Email ou mot de passe incorrect.", "form_data": {"email": email}}, status=400)
         login(request, user)
-        if not (user.is_active or user.is_staff or user.is_superuser):
+        if not _is_user_approved(user):
             return redirect("/inactive-account/")
         return redirect(request.GET.get("next") or "/cv/create/")
 
@@ -1045,7 +1058,7 @@ def logout_view(request: HttpRequest):
 @ensure_csrf_cookie
 def register_page(request: HttpRequest):
     if request.user.is_authenticated:
-        if request.user.is_active or request.user.is_staff or request.user.is_superuser:
+        if _is_user_approved(request.user):
             return redirect("/cv/create/")
         return redirect("/inactive-account/")
 
@@ -1080,7 +1093,6 @@ def register_page(request: HttpRequest):
 
         user = User(username=username, email=email, first_name=first_name, last_name=last_name)
         user.set_password(password)
-        user.is_active = False
         user.save()
 
         chars = string.ascii_uppercase + string.digits
@@ -1090,7 +1102,12 @@ def register_page(request: HttpRequest):
             if not UserProfile.objects.filter(referral_code=code).exists():
                 break
 
-        UserProfile.objects.create(user=user, referral_code=code, referred_by=referral_code if UserProfile.objects.filter(referral_code=referral_code).exists() else "")
+        UserProfile.objects.create(
+            user=user,
+            referral_code=code,
+            referred_by=referral_code if UserProfile.objects.filter(referral_code=referral_code).exists() else "",
+            is_approved=False,
+        )
         login(request, user)
         return redirect("/inactive-account/")
 

@@ -6,6 +6,7 @@ class UserProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile")
     referral_code = models.CharField(max_length=8, unique=True)
     referred_by = models.CharField(max_length=8, blank=True, default="")
+    is_approved = models.BooleanField(default=True)
 
 
 class Resume(models.Model):
