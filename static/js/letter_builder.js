@@ -68,6 +68,9 @@ document.addEventListener("DOMContentLoaded", function () {
       tone: currentTone,
       cv_id: selectedCvId?.value ? Number(selectedCvId.value) : null,
       recruiter: document.getElementById("recruiter")?.value.trim() || "",
+      sender_name: document.getElementById("senderName")?.value.trim() || "",
+      sender_email: document.getElementById("senderEmail")?.value.trim() || "",
+      sender_phone: document.getElementById("senderPhone")?.value.trim() || "",
       content: document.getElementById("letter-textarea")?.value || "",
       lang: appLang,
     };
@@ -78,7 +81,7 @@ document.addEventListener("DOMContentLoaded", function () {
     previewTimer = setTimeout(updatePreview, 400);
   }
 
-  ["company", "position", "recruiter"].forEach((id) => {
+  ["company", "position", "recruiter", "senderName", "senderEmail", "senderPhone"].forEach((id) => {
     document.getElementById(id)?.addEventListener("input", schedulePreviewUpdate);
   });
 

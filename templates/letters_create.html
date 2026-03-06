@@ -128,6 +128,30 @@
           </div>
         </div>
 
+        <div class="form-group">
+          <label>Nom et prénom (expéditeur) *</label>
+          <div class="input-with-icon">
+            <i data-lucide="badge-check" class="input-icon"></i>
+            <input id="senderName" class="letter-input" type="text" placeholder="Votre nom complet" value="{{ letter_draft.sender_name if letter_draft else sender_defaults.sender_name }}" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Email (expéditeur)</label>
+          <div class="input-with-icon">
+            <i data-lucide="mail" class="input-icon"></i>
+            <input id="senderEmail" class="letter-input" type="email" placeholder="vous@email.com" value="{{ letter_draft.sender_email if letter_draft else sender_defaults.sender_email }}" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Téléphone (expéditeur)</label>
+          <div class="input-with-icon">
+            <i data-lucide="phone" class="input-icon"></i>
+            <input id="senderPhone" class="letter-input" type="text" placeholder="+228 XX XX XX XX" value="{{ letter_draft.sender_phone if letter_draft else sender_defaults.sender_phone }}" />
+          </div>
+        </div>
+
         <button id="generate-btn" class="btn-generate" type="button">
           <i data-lucide="sparkles"></i>
           <span id="btn-text">✍️ Générer ma lettre</span>

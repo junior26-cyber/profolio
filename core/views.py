@@ -566,12 +566,37 @@ def _render_cv_pdf_html(cv_data: dict) -> str:
     return _render_cv_template_html(template_id, context)
 
 
-def _render_letter_html(*, template_id: str, content: str, company: str, position: str, recruiter: str, now_value: datetime | None = None) -> str:
+def _default_sender_from_user(user) -> dict:
+    first = (getattr(user, "first_name", "") or "").strip()
+    last = (getattr(user, "last_name", "") or "").strip()
+    full = f"{first} {last}".strip() or (getattr(user, "username", "") or "Nom Prénom")
+    return {
+        "sender_name": full,
+        "sender_email": (getattr(user, "email", "") or "").strip(),
+        "sender_phone": "",
+    }
+
+
+def _render_letter_html(
+    *,
+    template_id: str,
+    content: str,
+    company: str,
+    position: str,
+    recruiter: str,
+    sender_name: str = "",
+    sender_email: str = "",
+    sender_phone: str = "",
+    now_value: datetime | None = None,
+) -> str:
     now_value = now_value or datetime.now()
     date_label = now_value.strftime("%d/%m/%Y")
     safe_company = html.escape(company.strip() or "Entreprise")
     safe_position = html.escape(position.strip() or "Poste visé")
     safe_recruiter = html.escape(recruiter.strip() or "Madame, Monsieur")
+    safe_sender_name = html.escape(sender_name.strip() or "Nom Prénom")
+    safe_sender_email = html.escape(sender_email.strip())
+    safe_sender_phone = html.escape(sender_phone.strip())
     safe_content = html.escape(content.strip())
 
     if not safe_content:
@@ -591,7 +616,7 @@ def _render_letter_html(*, template_id: str, content: str, company: str, positio
           <div style=\"height:26px;background:#77C6C8;\"></div>
           <main style=\"padding:44px 40px 72px;\">
             <header style=\"text-align:center;\">
-              <div style=\"font-size:44px;line-height:1;font-weight:800;color:#0F172A;\">Nom Prénom</div>
+              <div style=\"font-size:44px;line-height:1;font-weight:800;color:#0F172A;\">{safe_sender_name}</div>
               <div style=\"margin-top:8px;font-size:17px;color:#475569;\">Candidature pour le poste de {safe_position}</div>
               <div style=\"margin-top:24px;height:3px;background:#77C6C8;\"></div>
             </header>
@@ -605,11 +630,9 @@ def _render_letter_html(*, template_id: str, content: str, company: str, positio
             <section style=\"margin-top:24px;font-size:15px;line-height:1.85;color:#1E293B;\">
               <p style=\"margin:0 0 16px;\">Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.</p>
               <div style=\"margin-top:38px;text-align:right;\">
-                <p style=\"margin:0;font-weight:700;color:#0F172A;\">Nom Prénom</p>
-                <p style=\"margin:4px 0 0;font-size:13px;color:#64748B;\">Mon adresse postale</p>
-                <p style=\"margin:2px 0 0;font-size:13px;color:#64748B;\">Code postal + Ville</p>
-                <p style=\"margin:2px 0 0;font-size:13px;color:#64748B;\">example@gmail.com</p>
-                <p style=\"margin:2px 0 0;font-size:13px;color:#64748B;\">+228 XX XX XX XX</p>
+                <p style=\"margin:0;font-weight:700;color:#0F172A;\">{safe_sender_name}</p>
+                <p style=\"margin:4px 0 0;font-size:13px;color:#64748B;\">{safe_sender_email}</p>
+                <p style=\"margin:2px 0 0;font-size:13px;color:#64748B;\">{safe_sender_phone}</p>
               </div>
             </section>
           </main>
@@ -1395,6 +1418,7 @@ def letters_home(request: HttpRequest):
 def letters_create_page(request: HttpRequest):
     letter_id = request.GET.get("letter_id")
     user_cvs = [{"id": r.id, "title": (r.input_data or {}).get("job_title") or "CV sans titre", "updated_at": r.updated_at.isoformat(), "template_name": (r.template or {}).get("name", "CV")} for r in Resume.objects.filter(user=request.user).order_by("-id")]
+    sender_defaults = _default_sender_from_user(request.user)
 
     current_letter = None
     if letter_id and str(letter_id).isdigit():
@@ -1408,12 +1432,15 @@ def letters_create_page(request: HttpRequest):
                 "recruiter": letter.recruiter,
                 "content": letter.content,
                 "linked_cv_id": letter.linked_cv_id,
+                "sender_name": letter.sender_name or sender_defaults["sender_name"],
+                "sender_email": letter.sender_email or sender_defaults["sender_email"],
+                "sender_phone": letter.sender_phone or "",
             }
 
     return _render_page(
         request,
         "letters_create.html",
-        {"user_cvs": user_cvs, "letter_draft": current_letter, "letter_mode": "create"},
+        {"user_cvs": user_cvs, "letter_draft": current_letter, "letter_mode": "create", "sender_defaults": sender_defaults},
     )
 
 
@@ -1429,6 +1456,7 @@ def letters_build_page(request: HttpRequest, letter_id: int):
         }
         for r in Resume.objects.filter(user=request.user).order_by("-id")
     ]
+    sender_defaults = _default_sender_from_user(request.user)
     letter = Letter.objects.filter(id=letter_id, user=request.user).first()
     if not letter:
         return redirect("/letters/create/")
@@ -1440,11 +1468,14 @@ def letters_build_page(request: HttpRequest, letter_id: int):
         "recruiter": letter.recruiter,
         "content": letter.content,
         "linked_cv_id": letter.linked_cv_id,
+        "sender_name": letter.sender_name or sender_defaults["sender_name"],
+        "sender_email": letter.sender_email or sender_defaults["sender_email"],
+        "sender_phone": letter.sender_phone or "",
     }
     return _render_page(
         request,
         "letters_create.html",
-        {"user_cvs": user_cvs, "letter_draft": current_letter, "letter_mode": "build"},
+        {"user_cvs": user_cvs, "letter_draft": current_letter, "letter_mode": "build", "sender_defaults": sender_defaults},
     )
 
 
@@ -1458,6 +1489,9 @@ def letter_preview_api(request: HttpRequest):
         company=str(payload.get("company", "")),
         position=str(payload.get("position", "")),
         recruiter=str(payload.get("recruiter", "")),
+        sender_name=str(payload.get("sender_name", "")),
+        sender_email=str(payload.get("sender_email", "")),
+        sender_phone=str(payload.get("sender_phone", "")),
     )
     return HttpResponse(html_doc)
 
@@ -1470,6 +1504,10 @@ def generate_letter_api(request: HttpRequest):
     position = str(payload.get("position", "")).strip()
     tone = str(payload.get("tone", "formel"))
     recruiter = str(payload.get("recruiter", "")).strip()
+    sender_defaults = _default_sender_from_user(request.user)
+    sender_name = str(payload.get("sender_name", "")).strip() or sender_defaults["sender_name"]
+    sender_email = str(payload.get("sender_email", "")).strip() or sender_defaults["sender_email"]
+    sender_phone = str(payload.get("sender_phone", "")).strip() or sender_defaults["sender_phone"]
     cv_id = payload.get("cv_id")
 
     if not company or not position:
@@ -1496,6 +1534,9 @@ def generate_letter_api(request: HttpRequest):
         template="elite",
         tone=tone,
         recruiter=recruiter,
+        sender_name=sender_name,
+        sender_email=sender_email,
+        sender_phone=sender_phone,
         is_draft=False,
     )
     return JsonResponse({"success": True, "content": content, "letter_id": letter.id})
@@ -1523,6 +1564,10 @@ def save_letter_draft(request: HttpRequest):
     letter.template = "elite"
     letter.tone = str(payload.get("tone", "formel"))
     letter.recruiter = str(payload.get("recruiter", "")).strip()
+    sender_defaults = _default_sender_from_user(request.user)
+    letter.sender_name = str(payload.get("sender_name", "")).strip() or sender_defaults["sender_name"]
+    letter.sender_email = str(payload.get("sender_email", "")).strip() or sender_defaults["sender_email"]
+    letter.sender_phone = str(payload.get("sender_phone", "")).strip() or sender_defaults["sender_phone"]
     letter.linked_cv = Resume.objects.filter(id=int(cv_id), user=request.user).first() if cv_id else None
     letter.is_draft = True
     letter.save()
@@ -1579,6 +1624,9 @@ def download_letter(request: HttpRequest, letter_id: int):
         company=letter.company,
         position=letter.position,
         recruiter=letter.recruiter,
+        sender_name=letter.sender_name,
+        sender_email=letter.sender_email,
+        sender_phone=letter.sender_phone,
     )
     return _html_to_pdf_response(html_doc, f"lettre-{letter.id}.pdf")
 
