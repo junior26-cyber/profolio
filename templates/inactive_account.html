@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Compte en attente | ProFolio</title>
+  <link rel="stylesheet" href="/static/css/auth.css?v=20260306" />
+</head>
+<body>
+  <main class="auth-page">
+    <div class="auth-bg">
+      <div class="auth-orb"></div>
+      <div class="auth-grid"></div>
+    </div>
+    <section class="auth-card">
+      <div class="auth-header">
+        <div class="auth-icon">⏳</div>
+        <h1 class="auth-title-sm">Votre compte n'est pas encore activé</h1>
+        <p class="auth-subtitle">
+          Bonjour {{ user.first_name or user.username }}, votre accès sera activé par l'administrateur après validation du paiement
+          (TMoney, Moov Money ou main à main).
+        </p>
+      </div>
+      <div class="auth-error" style="margin-bottom:14px;">
+        <span>Statut: En attente d'activation</span>
+      </div>
+      <p class="auth-subtitle" style="text-align:center;margin-bottom:16px;">
+        Contactez l'administrateur pour confirmer votre règlement.
+      </p>
+      <form action="/logout/" method="post">
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}" />
+        <button type="submit" class="btn-primary btn-full">Se déconnecter</button>
+      </form>
+    </section>
+  </main>
+</body>
+</html>

@@ -87,6 +87,28 @@
     <section class="tables-grid">
       <article class="panel reveal">
         <div class="panel-head">
+          <h3>Comptes en attente d'activation</h3>
+        </div>
+        <div class="table-list">
+          {% for pending in pending_users %}
+            <div class="row-item">
+              <div>
+                <p class="row-title">{{ pending.username }}</p>
+                <p class="row-sub">{{ pending.email }}</p>
+              </div>
+              <form method="post" action="/admin/users/{{ pending.id }}/activate/">
+                <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}" />
+                <button type="submit" class="btn-back">Activer</button>
+              </form>
+            </div>
+          {% else %}
+            <p class="empty">Aucun compte en attente.</p>
+          {% endfor %}
+        </div>
+      </article>
+
+      <article class="panel reveal">
+        <div class="panel-head">
           <h3>Derniers CV créés</h3>
         </div>
         <div class="table-list">

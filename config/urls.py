@@ -5,10 +5,12 @@ from core import views
 urlpatterns = [
     path("", views.home, name="home"),
     path("dashboard/", views.dashboard, name="dashboard"),
+    path("inactive-account/", views.inactive_account_page, name="inactive_account_page"),
     path("login/", views.login_page, name="login"),
     path("logout/", views.logout_view, name="logout"),
     path("register/", views.register_page, name="register"),
     path("admin/panel/", views.admin_panel, name="admin_panel"),
+    path("admin/users/<int:user_id>/activate/", views.activate_user_account, name="activate_user_account"),
     path("api/accounts/check-username/", views.check_username, name="check_username"),
     path("api/accounts/check-referral/", views.check_referral, name="check_referral"),
     path("templates/", views.templates_gallery, name="templates_gallery"),

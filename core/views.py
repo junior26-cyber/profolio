@@ -154,7 +154,7 @@ def _template_reference_photo(template_id: str) -> str:
     mapping = {
         "classique": "/static/image/20.jpg",
         "moderne": "/static/image/1131w-Y3HBVMtorcU.webp",
-        "informel": "/static/image/CV-Chauffeur-Livreur-1.jpg",
+        "informel": "/static/image/19.jpeg",
         "horizon": "/static/image/cv-15-red-1200.webp",
         "vertical": "/static/image/cv-6-blue-1200.webp",
         "pro": "/static/image/cv-facile.webp",
@@ -942,6 +942,14 @@ def dashboard(request: HttpRequest):
 
 @login_required(login_url="/login/")
 @require_GET
+def inactive_account_page(request: HttpRequest):
+    if request.user.is_active or request.user.is_staff or request.user.is_superuser:
+        return redirect("/cv/create/")
+    return _render_page(request, "inactive_account.html", {"user": request.user})
+
+
+@login_required(login_url="/login/")
+@require_GET
 def admin_panel(request: HttpRequest):
     if not (request.user.is_staff or request.user.is_superuser):
         return redirect("/dashboard/")
@@ -988,15 +996,29 @@ def admin_panel(request: HttpRequest):
         "top_templates": top_templates,
         "recent_resumes": Resume.objects.select_related("user").order_by("-created_at")[:6],
         "recent_letters": Letter.objects.select_related("user").order_by("-created_at")[:6],
+        "pending_users": User.objects.filter(is_active=False, is_staff=False, is_superuser=False).order_by("-date_joined")[:20],
     }
     return _render_page(request, "admin_panel.html", context)
+
+
+@login_required(login_url="/login/")
+@require_POST
+def activate_user_account(request: HttpRequest, user_id: int):
+    if not (request.user.is_staff or request.user.is_superuser):
+        return redirect("/dashboard/")
+    target = get_object_or_404(User, id=user_id)
+    target.is_active = True
+    target.save(update_fields=["is_active"])
+    return redirect("/admin/panel/")
 
 
 @require_http_methods(["GET", "POST"])
 @ensure_csrf_cookie
 def login_page(request: HttpRequest):
     if request.user.is_authenticated:
-        return redirect("/cv/create/")
+        if request.user.is_active or request.user.is_staff or request.user.is_superuser:
+            return redirect("/cv/create/")
+        return redirect("/inactive-account/")
 
     if request.method == "POST":
         email = (request.POST.get("email") or "").strip().lower()
@@ -1005,6 +1027,8 @@ def login_page(request: HttpRequest):
         if not user or not user.check_password(password):
             return _render_page(request, "login.html", {"error": "Email ou mot de passe incorrect.", "form_data": {"email": email}}, status=400)
         login(request, user)
+        if not (user.is_active or user.is_staff or user.is_superuser):
+            return redirect("/inactive-account/")
         return redirect(request.GET.get("next") or "/cv/create/")
 
     return _render_page(request, "login.html", {"error": None, "form_data": {"email": ""}})
@@ -1021,7 +1045,9 @@ def logout_view(request: HttpRequest):
 @ensure_csrf_cookie
 def register_page(request: HttpRequest):
     if request.user.is_authenticated:
-        return redirect("/cv/create/")
+        if request.user.is_active or request.user.is_staff or request.user.is_superuser:
+            return redirect("/cv/create/")
+        return redirect("/inactive-account/")
 
     if request.method == "POST":
         first_name = (request.POST.get("first_name") or "").strip()
@@ -1054,6 +1080,7 @@ def register_page(request: HttpRequest):
 
         user = User(username=username, email=email, first_name=first_name, last_name=last_name)
         user.set_password(password)
+        user.is_active = False
         user.save()
 
         chars = string.ascii_uppercase + string.digits
@@ -1065,7 +1092,7 @@ def register_page(request: HttpRequest):
 
         UserProfile.objects.create(user=user, referral_code=code, referred_by=referral_code if UserProfile.objects.filter(referral_code=referral_code).exists() else "")
         login(request, user)
-        return redirect("/cv/create/")
+        return redirect("/inactive-account/")
 
     return _render_page(request, "register.html", {"error": None, "form_data": {}})
 
