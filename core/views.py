@@ -569,7 +569,9 @@ def _render_cv_pdf_html(cv_data: dict) -> str:
 def _default_sender_from_user(user) -> dict:
     first = (getattr(user, "first_name", "") or "").strip()
     last = (getattr(user, "last_name", "") or "").strip()
-    full = f"{first} {last}".strip() or (getattr(user, "username", "") or "Nom Prénom")
+    email_value = (getattr(user, "email", "") or "").strip()
+    email_local = email_value.split("@")[0].strip() if "@" in email_value else ""
+    full = f"{first} {last}".strip() or (getattr(user, "username", "") or email_local or "Nom Prénom")
     return {
         "sender_name": full,
         "sender_email": (getattr(user, "email", "") or "").strip(),
@@ -1483,15 +1485,16 @@ def letters_build_page(request: HttpRequest, letter_id: int):
 @require_POST
 def letter_preview_api(request: HttpRequest):
     payload = _safe_json_body(request)
+    sender_defaults = _default_sender_from_user(request.user)
     html_doc = _render_letter_html(
         template_id=str(payload.get("template", "elite")),
         content=str(payload.get("content", "")),
         company=str(payload.get("company", "")),
         position=str(payload.get("position", "")),
         recruiter=str(payload.get("recruiter", "")),
-        sender_name=str(payload.get("sender_name", "")),
-        sender_email=str(payload.get("sender_email", "")),
-        sender_phone=str(payload.get("sender_phone", "")),
+        sender_name=str(payload.get("sender_name", "")).strip() or sender_defaults["sender_name"],
+        sender_email=str(payload.get("sender_email", "")).strip() or sender_defaults["sender_email"],
+        sender_phone=str(payload.get("sender_phone", "")).strip() or sender_defaults["sender_phone"],
     )
     return HttpResponse(html_doc)
 
@@ -1618,15 +1621,16 @@ def edit_letter(request: HttpRequest, letter_id: int):
 @require_GET
 def download_letter(request: HttpRequest, letter_id: int):
     letter = get_object_or_404(Letter, id=letter_id, user=request.user)
+    sender_defaults = _default_sender_from_user(request.user)
     html_doc = _render_letter_html(
         template_id=letter.template or "elite",
         content=letter.content,
         company=letter.company,
         position=letter.position,
         recruiter=letter.recruiter,
-        sender_name=letter.sender_name,
-        sender_email=letter.sender_email,
-        sender_phone=letter.sender_phone,
+        sender_name=letter.sender_name or sender_defaults["sender_name"],
+        sender_email=letter.sender_email or sender_defaults["sender_email"],
+        sender_phone=letter.sender_phone or sender_defaults["sender_phone"],
     )
     return _html_to_pdf_response(html_doc, f"lettre-{letter.id}.pdf")
 
