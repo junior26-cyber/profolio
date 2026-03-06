@@ -16,6 +16,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const selectedTemplateInput = document.getElementById("selectedTemplate");
   const currentLetterIdInput = document.getElementById("currentLetterId");
   const initialToneInput = document.getElementById("initialTone");
+  const pageMode = document.body?.dataset?.letterMode || "create";
 
   let currentTone = initialToneInput?.value || "formel";
   document.querySelectorAll(".tone-card").forEach((card) => {
@@ -238,6 +239,10 @@ document.addEventListener("DOMContentLoaded", function () {
       editZone?.classList.remove("hidden");
       if (downloadLink) downloadLink.href = `/letters/download/${result.letter_id}/`;
       if (currentLetterIdInput) currentLetterIdInput.value = String(result.letter_id || "");
+      if (pageMode === "create" && result.letter_id) {
+        window.location.href = `/letters/build/${result.letter_id}/`;
+        return;
+      }
       setLoading(false);
       schedulePreviewUpdate();
     } catch (error) {

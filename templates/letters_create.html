@@ -7,7 +7,7 @@
   <title>Créer Lettre | ProFolio</title>
   <link rel="stylesheet" href="/static/css/letter_builder.css" />
 </head>
-<body data-page="letter">
+<body data-page="letter" data-letter-mode="{{ letter_mode or 'create' }}">
 <div class="letter-page">
   <header class="letter-topbar">
     <div class="top-left">
@@ -18,7 +18,7 @@
     </div>
 
     <div class="top-center">
-      <span class="center-title">Création de lettre</span>
+      <span class="center-title">{{ 'Édition de lettre' if (letter_mode == 'build') else 'Création de lettre' }}</span>
     </div>
 
     <div class="top-right">

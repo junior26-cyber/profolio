@@ -584,37 +584,36 @@ def _render_letter_html(*, template_id: str, content: str, company: str, positio
         body_paragraphs = [line.strip() for line in safe_content.splitlines() if line.strip()]
     body_html = "".join(f"<p>{paragraph}</p>" for paragraph in body_paragraphs)
 
-    template_styles = {
-        "executive": {"header_bg": "#0A0F1E", "accent": "#F59E0B", "subject_style": "text-transform:uppercase;font-weight:800;letter-spacing:.06em;"},
-        "prestige": {"header_bg": "#111827", "accent": "#D4AF37", "subject_style": "text-transform:uppercase;font-weight:800;border-bottom:2px solid #3B82F6;padding-bottom:6px;"},
-        "horizon": {"header_bg": "#0F766E", "accent": "#14B8A6", "subject_style": "font-weight:700;color:#0F766E;"},
-        "elite": {"header_bg": "#1E293B", "accent": "#3B82F6", "subject_style": "font-weight:700;"},
-    }
-    style = template_styles.get(template_id, template_styles["elite"])
-    name_color = "#FFFFFF"
-    text_color = "#1F2937"
-
     return f"""
     <html>
-      <body style=\"margin:0;padding:0;background:#fff;font-family:'DM Sans',Arial,sans-serif;color:{text_color}\">
-        <div style=\"width:595px;min-height:842px;margin:0 auto;padding:0;box-sizing:border-box;\">
-          <header style=\"padding:28px 34px 20px;background:{style['header_bg']};color:{name_color};\">
-            <div style=\"font-size:28px;font-weight:700;line-height:1.1;\">CANDIDATURE</div>
-            <div style=\"margin-top:10px;font-size:12px;opacity:.9;\">{date_label} • {safe_company}</div>
-          </header>
-          <div style=\"height:4px;background:{style['accent']};\"></div>
-          <main style=\"padding:28px 34px 20px;\">
-            <div style=\"font-size:13px;color:#4B5563;line-height:1.7;\">
-              <div>{safe_company}</div>
+      <body style=\"margin:0;padding:0;background:#f8fafc;font-family:'DM Sans',Arial,sans-serif;color:#1F2937;\">
+        <div style=\"width:595px;min-height:842px;margin:0 auto;background:#ffffff;position:relative;box-sizing:border-box;\">
+          <div style=\"height:26px;background:#77C6C8;\"></div>
+          <main style=\"padding:44px 40px 72px;\">
+            <header style=\"text-align:center;\">
+              <div style=\"font-size:44px;line-height:1;font-weight:800;color:#0F172A;\">Nom Prénom</div>
+              <div style=\"margin-top:8px;font-size:17px;color:#475569;\">Candidature pour le poste de {safe_position}</div>
+              <div style=\"margin-top:24px;height:3px;background:#77C6C8;\"></div>
+            </header>
+            <div style=\"margin-top:28px;font-size:14px;color:#334155;line-height:1.45;\">
+              <div style=\"font-weight:700;\">{safe_company}</div>
               <div>{safe_recruiter}</div>
-              <div style=\"margin-top:8px;\">Objet : <span style=\"{style['subject_style']}\">Candidature au poste de {safe_position}</span></div>
+              <div>Poste : {safe_position}</div>
+              <div>Le {date_label}</div>
             </div>
-            <section style=\"margin-top:20px;font-size:15px;line-height:1.9;color:#1F2937;\">{body_html}</section>
-            <section style=\"margin-top:34px;font-size:15px;color:#1F2937;\">
-              <p style=\"margin:0 0 20px;\">Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.</p>
-              <p style=\"margin:0;font-weight:600;\">Signature</p>
+            <section style=\"margin-top:24px;font-size:15px;line-height:1.85;color:#1E293B;\">{body_html}</section>
+            <section style=\"margin-top:24px;font-size:15px;line-height:1.85;color:#1E293B;\">
+              <p style=\"margin:0 0 16px;\">Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.</p>
+              <div style=\"margin-top:38px;text-align:right;\">
+                <p style=\"margin:0;font-weight:700;color:#0F172A;\">Nom Prénom</p>
+                <p style=\"margin:4px 0 0;font-size:13px;color:#64748B;\">Mon adresse postale</p>
+                <p style=\"margin:2px 0 0;font-size:13px;color:#64748B;\">Code postal + Ville</p>
+                <p style=\"margin:2px 0 0;font-size:13px;color:#64748B;\">example@gmail.com</p>
+                <p style=\"margin:2px 0 0;font-size:13px;color:#64748B;\">+228 XX XX XX XX</p>
+              </div>
             </section>
           </main>
+          <div style=\"height:26px;background:#77C6C8;position:absolute;left:0;right:0;bottom:0;\"></div>
         </div>
       </body>
     </html>
@@ -1411,7 +1410,42 @@ def letters_create_page(request: HttpRequest):
                 "linked_cv_id": letter.linked_cv_id,
             }
 
-    return _render_page(request, "letters_create.html", {"user_cvs": user_cvs, "letter_draft": current_letter})
+    return _render_page(
+        request,
+        "letters_create.html",
+        {"user_cvs": user_cvs, "letter_draft": current_letter, "letter_mode": "create"},
+    )
+
+
+@login_required(login_url="/login/")
+@require_GET
+def letters_build_page(request: HttpRequest, letter_id: int):
+    user_cvs = [
+        {
+            "id": r.id,
+            "title": (r.input_data or {}).get("job_title") or "CV sans titre",
+            "updated_at": r.updated_at.isoformat(),
+            "template_name": (r.template or {}).get("name", "CV"),
+        }
+        for r in Resume.objects.filter(user=request.user).order_by("-id")
+    ]
+    letter = Letter.objects.filter(id=letter_id, user=request.user).first()
+    if not letter:
+        return redirect("/letters/create/")
+    current_letter = {
+        "id": letter.id,
+        "tone": letter.tone,
+        "company": letter.company,
+        "position": letter.position,
+        "recruiter": letter.recruiter,
+        "content": letter.content,
+        "linked_cv_id": letter.linked_cv_id,
+    }
+    return _render_page(
+        request,
+        "letters_create.html",
+        {"user_cvs": user_cvs, "letter_draft": current_letter, "letter_mode": "build"},
+    )
 
 
 @login_required(login_url="/login/")
@@ -1532,7 +1566,7 @@ def edit_letter(request: HttpRequest, letter_id: int):
     letter = Letter.objects.filter(id=letter_id, user=request.user).first()
     if not letter:
         return redirect("/letters/create/")
-    return redirect(f"/letters/create/?letter_id={letter_id}")
+    return redirect(f"/letters/build/{letter_id}/")
 
 
 @login_required(login_url="/login/")

@@ -24,6 +24,7 @@ urlpatterns = [
     path("cv/download/latest/", views.download_latest_cv, name="download_latest_cv"),
     path("letters/", views.letters_home, name="letters_home"),
     path("letters/create/", views.letters_create_page, name="letters_create"),
+    path("letters/build/<int:letter_id>/", views.letters_build_page, name="letters_build"),
     path("letters/edit/<int:letter_id>/", views.edit_letter, name="edit_letter"),
     path("letters/download/<int:letter_id>/", views.download_letter, name="download_letter"),
     path("api/cv/preview/", views.preview_cv, name="preview_cv"),
